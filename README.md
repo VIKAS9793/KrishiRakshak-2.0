@@ -55,6 +55,12 @@ To empower rural farmers with accurate, accessible, and explainable AI-powered c
 - Support multiple languages for better accessibility
 - Generate actionable recommendations
 
+## Documentation
+
+For detailed technical documentation, please refer to:
+- [Architecture Guide](docs/ARCHITECTURE.md) - Technical architecture and system design
+- [Quick Start Guide](docs/QUICKSTART.md) - Getting started instructions
+
 ## Technical Architecture
 
 KrishiRakshak leverages a modern deep learning stack for efficient plant disease classification:
@@ -121,14 +127,14 @@ KrishiRakshak/
 
 ### 2. Quick Start
 
-For detailed setup instructions, please refer to the [Quick Start Guide](docs/QUICKSTART.md).
-
 ```bash
 # 1. Clone the repository
-git clone https://github.com/yourusername/KrishiRakshak.git
-cd KrishiRakshak
+git clone https://github.com/VIKAS9793/KrishiRakshak-2.0.git
+cd KrishiRakshak-2.0
 
-# 2. Follow the setup instructions in docs/QUICKSTART.md
+# 2. Install dependencies
+pip install -r requirements.txt
+
 # 3. Prepare your dataset (see Data Preparation below)
 # 4. Start training
 python src/train.py
