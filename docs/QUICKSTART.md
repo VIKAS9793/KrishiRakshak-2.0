@@ -1,9 +1,6 @@
 # KrishiRakshak – AI-Powered Crop Health Guardian
 स्वस्थ फसल, समृद्ध किसान | Healthy Crops, Prosperous Farmers
 
-[![KrishiRakshak Banner](../assets/banner.png)](https://github.com/yourusername/krishirakshak)
-[![KrishiRakshak Logo](../assets/logo.png)](https://github.com/yourusername/krishirakshak)
-
 ## Quick Start Guide
 
 Welcome to KrishiRakshak - your lightweight, resource-efficient solution for plant disease classification. This guide will help you set up and deploy our AI-powered system for rural farmers.
