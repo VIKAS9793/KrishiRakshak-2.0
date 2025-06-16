@@ -33,6 +33,11 @@ graph TD
     F --> G[Display]
     F --> H[Recommendations]
     F --> I[Local Storage]
+    
+    I --> J[SQLite]
+    I --> K[Cache]
+    B --> L[Mobile App]
+    B --> M[Gradio Interface]
 
     style A fill:#f9f,stroke:#333,stroke-width:2px
     style B fill:#bbf,stroke:#333,stroke-width:2px
@@ -47,34 +52,6 @@ graph TD
     style K fill:#bfb,stroke:#333,stroke-width:2px
     style L fill:#bbf,stroke:#333,stroke-width:2px
     style M fill:#bbf,stroke:#333,stroke-width:2px
-
-    subgraph Offline App
-    B --> D
-    D --> E
-    E --> F
-    end
-
-    subgraph Local Storage
-    F --> I
-    I --> J[SQLite]
-    I --> K[Cache]
-    end
-
-    subgraph UI Options
-    B --> L[Mobile App]
-    B --> M[Gradio Interface]
-    end
-
-    subgraph Offline Features
-    D --> E
-    E --> F
-    F --> I
-    end
-
-    style Offline App fill:#fbb,stroke:#333,stroke-width:2px
-    style Local Storage fill:#bfb,stroke:#333,stroke-width:2px
-    style UI Options fill:#bbf,stroke:#333,stroke-width:2px
-    style Offline Features fill:#fbb,stroke:#333,stroke-width:2px
 ```
 
 #### 1.2.2 Gradio Interface Flow
@@ -94,25 +71,6 @@ graph TD
     style E fill:#bfb,stroke:#333,stroke-width:2px
     style F fill:#bbf,stroke:#333,stroke-width:2px
     style G fill:#bfb,stroke:#333,stroke-width:2px
-
-    subgraph Gradio UI
-    B --> C
-    E --> F
-    end
-    end
-
-    subgraph Model Pipeline
-    C --> D
-    D --> E
-    end
-
-    subgraph Local Storage
-    F --> G
-    end
-
-    style Gradio UI fill:#bbf,stroke:#333,stroke-width:2px
-    style Model Pipeline fill:#fbb,stroke:#333,stroke-width:2px
-    style Local Storage fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
 ### 1.3 Technical Stack (Offline-First)
@@ -168,31 +126,30 @@ graph TD
 
 ```mermaid
 graph TD
-    A[Input (224x224)] --> B[Conv2D]
+    A[Input 224x224] --> B[Conv2D]
     B --> C[MobileNetV3 Base]
     C --> D[Custom Head]
-    D --> E[Output (38 classes)]
+    D --> E[Output 38 classes]
+    
+    C --> F[Depthwise Conv]
+    F --> G[Squeeze-Excitation]
+    G --> H[Hard-Swish]
+    
+    D --> I[1024 Units]
+    I --> J[512 Units]
+    J --> K[38 Units]
 
     style A fill:#f9f,stroke:#333,stroke-width:2px
     style B fill:#9ff,stroke:#333,stroke-width:2px
     style C fill:#fbb,stroke:#333,stroke-width:2px
     style D fill:#bfb,stroke:#333,stroke-width:2px
     style E fill:#bbf,stroke:#333,stroke-width:2px
-
-    subgraph MobileNetV3
-    C --> F[Depthwise Conv]
-    F --> G[Squeeze-Excitation]
-    G --> H[Hard-Swish]
-    end
-
-    subgraph Custom Head
-    D --> I[1024 Units]
-    I --> J[512 Units]
-    J --> K[38 Units]
-    end
-
-    style MobileNetV3 fill:#fbb,stroke:#333,stroke-width:2px
-    style Custom Head fill:#bfb,stroke:#333,stroke-width:2px
+    style F fill:#fbb,stroke:#333,stroke-width:2px
+    style G fill:#fbb,stroke:#333,stroke-width:2px
+    style H fill:#fbb,stroke:#333,stroke-width:2px
+    style I fill:#bfb,stroke:#333,stroke-width:2px
+    style J fill:#bfb,stroke:#333,stroke-width:2px
+    style K fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
 #### 2.2 Technical Specifications
@@ -235,10 +192,10 @@ graph TD
 graph TD
     A[Input Features] --> B[1024 Units]
     B --> C[Hard-Swish]
-    C --> D[Dropout (0.2)]
+    C --> D[Dropout 0.2]
     D --> E[512 Units]
     E --> F[Hard-Swish]
-    F --> G[Dropout (0.1)]
+    F --> G[Dropout 0.1]
     G --> H[38 Units]
     H --> I[Softmax]
 
