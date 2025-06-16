@@ -2,9 +2,9 @@
 स्वस्थ फसल, समृद्ध किसान | Healthy Crops, Prosperous Farmers
 
 <p align="center">
-  <img src="assets/banners/banner.png?raw=true" alt="KrishiRakshak Banner" width="800" height="200">
+  <img src="assets/banners/banner.png?raw=true" alt="KrishiRakshak Banner" width="800">
   <br>
-  <img src="assets/logos/logo.png?raw=true" alt="KrishiRakshak Logo" width="200" height="200">
+  <img src="assets/logos/logo.png?raw=true" alt="KrishiRakshak Logo" width="200">
 </p>
 
 ## Project Repository
