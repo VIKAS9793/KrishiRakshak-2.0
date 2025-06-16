@@ -1,8 +1,11 @@
 # KrishiRakshak – AI-Powered Crop Health Guardian
 स्वस्थ फसल, समृद्ध किसान | Healthy Crops, Prosperous Farmers
 
-[![KrishiRakshak Banner](assets/banners/banner.png)](https://github.com/VIKAS9793/KrishiRakshak-2.0)
-[![KrishiRakshak Logo](assets/logos/logo.png)](https://github.com/VIKAS9793/KrishiRakshak-2.0)
+<p align="center">
+  <img src="assets/banners/banner.png?raw=true" alt="KrishiRakshak Banner" width="800" height="200">
+  <br>
+  <img src="assets/logos/logo.png?raw=true" alt="KrishiRakshak Logo" width="200" height="200">
+</p>
 
 ## Project Repository
 [GitHub Repository](https://github.com/VIKAS9793/KrishiRakshak-2.0)
