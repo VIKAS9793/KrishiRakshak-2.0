@@ -7,9 +7,6 @@
   <img src="assets/logos/logo.png?raw=true" alt="KrishiRakshak Logo" width="200">
 </p>
 
-## Project Repository
-[GitHub Repository](https://github.com/VIKAS9793/KrishiRakshak-2.0)
-
 ## Getting Started
 
 1. **Clone the Repository**
@@ -58,11 +55,26 @@ To empower rural farmers with accurate, accessible, and explainable AI-powered c
 - Support multiple languages for better accessibility
 - Generate actionable recommendations
 
-## Architecture Overview
+## Technical Architecture
 
-For detailed technical architecture and model specifications, please refer to the [Architecture Documentation](docs/ARCHITECTURE.md).
+KrishiRakshak leverages a modern deep learning stack for efficient plant disease classification:
 
-## Project Structure
+### Model Architecture
+- **Backbone**: MobileNetV3-Large (pretrained on ImageNet)
+- **Classifier Head**: Custom layers with dropout and ReLU activation
+- **Input Size**: 224x224 pixels (RGB)
+- **Output**: 38 plant disease classes
+
+### Training Pipeline
+1. Data loading and augmentation
+2. Model training with mixed precision
+3. Validation and metric computation
+4. Model checkpointing and logging
+
+### Deployment Options
+- ONNX Runtime for CPU/GPU inference
+- TensorFlow Lite for mobile deployment
+- TorchScript for production serving
 
 ## Project Structure
 
