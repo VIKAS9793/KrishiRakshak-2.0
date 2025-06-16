@@ -37,10 +37,23 @@ ENV/
 *.log
 
 # Checkpoints and models
+# Exclude all model files by default
 models/*.pth
 models/*.onnx
 models/*.tflite
 models/*.pt
+
+# Track only best models
+!models/best_*.pth
+!models/best_*.onnx
+!models/best_*.tflite
+!models/best_*.pt
+
+# Track final production models
+!models/production_*.pth
+!models/production_*.onnx
+!models/production_*.tflite
+!models/production_*.pt
 
 # Datasets
 *.npy

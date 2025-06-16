@@ -1,6 +1,59 @@
-# KrishiRakshak: Plant Disease Classification
+# KrishiRakshak – AI-Powered Crop Health Guardian
+स्वस्थ फसल, समृद्ध किसान | Healthy Crops, Prosperous Farmers
 
-An end-to-end deep learning pipeline for plant disease classification using PyTorch Lightning and modern MLOps practices.
+[![KrishiRakshak Banner](assets/banner.png)](https://github.com/VIKAS9793/KrishiRakshak-2.0)
+[![KrishiRakshak Logo](assets/logo.png)](https://github.com/VIKAS9793/KrishiRakshak-2.0)
+
+## Project Repository
+[GitHub Repository](https://github.com/VIKAS9793/KrishiRakshak-2.0)
+
+## Getting Started
+
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/VIKAS9793/KrishiRakshak-2.0.git
+   cd KrishiRakshak-2.0
+   ```
+
+## Project Overview
+
+KrishiRakshak is a comprehensive AI solution that combines real-time plant disease classification with actionable agricultural advisory. Our system is designed to help rural farmers quickly identify and manage plant diseases through:
+
+### Unique Selling Points (USPs)
+1. **Real-Time Disease Classification**
+   - Instant disease detection using AI
+   - Works offline in remote areas
+   - Accurate classification of 38 plant diseases
+
+2. **Actionable Advisory System**
+   - Immediate disease management recommendations
+   - Local language support for better understanding
+   - Step-by-step treatment guidelines
+   - Emergency response protocols
+
+3. **Resource-Efficient Technology**
+   - Optimized MobileNetV3-Large architecture
+   - Offline-first deployment
+   - Model quantization for low-resource devices
+   - Multi-format export for various devices
+
+### Core Features
+- Real-time disease classification
+- Instant advisory recommendations
+- Offline-capable operation
+- Multi-language support
+- Explainable predictions
+- Resource-efficient design
+
+### Project Vision
+To empower rural farmers with accurate, accessible, and explainable AI-powered crop health monitoring tools that help prevent crop losses and improve agricultural productivity through immediate advisory support.
+
+### Technical Mission
+- Provide instant disease detection and advisory
+- Maintain model accuracy on low-resource devices
+- Enable offline operation in remote areas
+- Support multiple languages for better accessibility
+- Generate actionable, explainable recommendations
 
 ## Architecture Overview
 
