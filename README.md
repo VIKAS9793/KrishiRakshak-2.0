@@ -1,8 +1,8 @@
 # KrishiRakshak – AI-Powered Crop Health Guardian
 स्वस्थ फसल, समृद्ध किसान | Healthy Crops, Prosperous Farmers
 
-[![KrishiRakshak Banner](assets/banner.png)](https://github.com/VIKAS9793/KrishiRakshak-2.0)
-[![KrishiRakshak Logo](assets/logo.png)](https://github.com/VIKAS9793/KrishiRakshak-2.0)
+[![KrishiRakshak Banner](assets/banners/banner.png)](https://github.com/VIKAS9793/KrishiRakshak-2.0)
+[![KrishiRakshak Logo](assets/logos/logo.png)](https://github.com/VIKAS9793/KrishiRakshak-2.0)
 
 ## Project Repository
 [GitHub Repository](https://github.com/VIKAS9793/KrishiRakshak-2.0)
@@ -19,27 +19,27 @@
 
 KrishiRakshak is a comprehensive AI solution that combines real-time plant disease classification with actionable agricultural advisory. Our system is designed to help rural farmers quickly identify and manage plant diseases through:
 
-### Unique Selling Points (USPs)
-1. **Real-Time Disease Classification**
-   - Instant disease detection using AI
-   - Works offline in remote areas
+### Key Features
+1. **Real-Time Disease Detection**
+   - AI-powered disease identification
+   - Offline operation in remote areas
    - Accurate classification of 38 plant diseases
 
 2. **Actionable Advisory System**
    - Immediate disease management recommendations
    - Local language support for better understanding
-   - Step-by-step treatment guidelines
+   - Clear treatment guidelines
    - Emergency response protocols
 
 3. **Resource-Efficient Technology**
    - Optimized MobileNetV3-Large architecture
    - Offline-first deployment
-   - Model quantization for low-resource devices
+   - Efficient model quantization
    - Multi-format export for various devices
 
-### Core Features
-- Real-time disease classification
-- Instant advisory recommendations
+### Core Capabilities
+- Real-time disease detection
+- Actionable advisory recommendations
 - Offline-capable operation
 - Multi-language support
 - Explainable predictions
@@ -49,11 +49,11 @@ KrishiRakshak is a comprehensive AI solution that combines real-time plant disea
 To empower rural farmers with accurate, accessible, and explainable AI-powered crop health monitoring tools that help prevent crop losses and improve agricultural productivity through immediate advisory support.
 
 ### Technical Mission
-- Provide instant disease detection and advisory
+- Provide accurate disease detection
 - Maintain model accuracy on low-resource devices
 - Enable offline operation in remote areas
 - Support multiple languages for better accessibility
-- Generate actionable, explainable recommendations
+- Generate actionable recommendations
 
 ## Architecture Overview
 
