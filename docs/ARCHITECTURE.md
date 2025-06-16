@@ -39,19 +39,19 @@ graph TD
     B --> L[Mobile App]
     B --> M[Gradio Interface]
 
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style B fill:#bbf,stroke:#333,stroke-width:2px
-    style C fill:#9ff,stroke:#333,stroke-width:2px
-    style D fill:#fbb,stroke:#333,stroke-width:2px
-    style E fill:#bfb,stroke:#333,stroke-width:2px
-    style F fill:#f9f,stroke:#333,stroke-width:2px
-    style G fill:#9ff,stroke:#333,stroke-width:2px
-    style H fill:#9ff,stroke:#333,stroke-width:2px
-    style I fill:#fbb,stroke:#333,stroke-width:2px
-    style J fill:#bfb,stroke:#333,stroke-width:2px
-    style K fill:#bfb,stroke:#333,stroke-width:2px
-    style L fill:#bbf,stroke:#333,stroke-width:2px
-    style M fill:#bbf,stroke:#333,stroke-width:2px
+    style A fill:#2563eb,stroke:#1e40af,stroke-width:3px,color:#ffffff
+    style B fill:#dc2626,stroke:#b91c1c,stroke-width:3px,color:#ffffff
+    style C fill:#059669,stroke:#047857,stroke-width:3px,color:#ffffff
+    style D fill:#7c3aed,stroke:#6d28d9,stroke-width:3px,color:#ffffff
+    style E fill:#ea580c,stroke:#c2410c,stroke-width:3px,color:#ffffff
+    style F fill:#0891b2,stroke:#0e7490,stroke-width:3px,color:#ffffff
+    style G fill:#65a30d,stroke:#4d7c0f,stroke-width:3px,color:#ffffff
+    style H fill:#be185d,stroke:#9d174d,stroke-width:3px,color:#ffffff
+    style I fill:#1f2937,stroke:#111827,stroke-width:3px,color:#ffffff
+    style J fill:#374151,stroke:#1f2937,stroke-width:3px,color:#ffffff
+    style K fill:#4b5563,stroke:#374151,stroke-width:3px,color:#ffffff
+    style L fill:#7c2d12,stroke:#6b2914,stroke-width:3px,color:#ffffff
+    style M fill:#166534,stroke:#14532d,stroke-width:3px,color:#ffffff
 ```
 
 #### 1.2.2 Gradio Interface Flow
@@ -64,13 +64,13 @@ graph TD
     E --> F[Display Results]
     F --> G[Save to Local]
 
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style B fill:#bbf,stroke:#333,stroke-width:2px
-    style C fill:#9ff,stroke:#333,stroke-width:2px
-    style D fill:#fbb,stroke:#333,stroke-width:2px
-    style E fill:#bfb,stroke:#333,stroke-width:2px
-    style F fill:#bbf,stroke:#333,stroke-width:2px
-    style G fill:#bfb,stroke:#333,stroke-width:2px
+    style A fill:#2563eb,stroke:#1e40af,stroke-width:3px,color:#ffffff
+    style B fill:#dc2626,stroke:#b91c1c,stroke-width:3px,color:#ffffff
+    style C fill:#059669,stroke:#047857,stroke-width:3px,color:#ffffff
+    style D fill:#7c3aed,stroke:#6d28d9,stroke-width:3px,color:#ffffff
+    style E fill:#ea580c,stroke:#c2410c,stroke-width:3px,color:#ffffff
+    style F fill:#0891b2,stroke:#0e7490,stroke-width:3px,color:#ffffff
+    style G fill:#65a30d,stroke:#4d7c0f,stroke-width:3px,color:#ffffff
 ```
 
 ### 1.3 Technical Stack (Offline-First)
@@ -139,17 +139,17 @@ graph TD
     I --> J[512 Units]
     J --> K[38 Units]
 
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style B fill:#9ff,stroke:#333,stroke-width:2px
-    style C fill:#fbb,stroke:#333,stroke-width:2px
-    style D fill:#bfb,stroke:#333,stroke-width:2px
-    style E fill:#bbf,stroke:#333,stroke-width:2px
-    style F fill:#fbb,stroke:#333,stroke-width:2px
-    style G fill:#fbb,stroke:#333,stroke-width:2px
-    style H fill:#fbb,stroke:#333,stroke-width:2px
-    style I fill:#bfb,stroke:#333,stroke-width:2px
-    style J fill:#bfb,stroke:#333,stroke-width:2px
-    style K fill:#bfb,stroke:#333,stroke-width:2px
+    style A fill:#2563eb,stroke:#1e40af,stroke-width:3px,color:#ffffff
+    style B fill:#dc2626,stroke:#b91c1c,stroke-width:3px,color:#ffffff
+    style C fill:#7c3aed,stroke:#6d28d9,stroke-width:3px,color:#ffffff
+    style D fill:#ea580c,stroke:#c2410c,stroke-width:3px,color:#ffffff
+    style E fill:#0891b2,stroke:#0e7490,stroke-width:3px,color:#ffffff
+    style F fill:#8b5cf6,stroke:#7c3aed,stroke-width:3px,color:#ffffff
+    style G fill:#a855f7,stroke:#9333ea,stroke-width:3px,color:#ffffff
+    style H fill:#c084fc,stroke:#a855f7,stroke-width:3px,color:#ffffff
+    style I fill:#f97316,stroke:#ea580c,stroke-width:3px,color:#ffffff
+    style J fill:#fb923c,stroke:#f97316,stroke-width:3px,color:#ffffff
+    style K fill:#fdba74,stroke:#fb923c,stroke-width:3px,color:#000000
 ```
 
 #### 2.2 Technical Specifications
@@ -199,15 +199,15 @@ graph TD
     G --> H[38 Units]
     H --> I[Softmax]
 
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style B fill:#9ff,stroke:#333,stroke-width:2px
-    style C fill:#fbb,stroke:#333,stroke-width:2px
-    style D fill:#bfb,stroke:#333,stroke-width:2px
-    style E fill:#bbf,stroke:#333,stroke-width:2px
-    style F fill:#fbb,stroke:#333,stroke-width:2px
-    style G fill:#bfb,stroke:#333,stroke-width:2px
-    style H fill:#bbf,stroke:#333,stroke-width:2px
-    style I fill:#9ff,stroke:#333,stroke-width:2px
+    style A fill:#2563eb,stroke:#1e40af,stroke-width:3px,color:#ffffff
+    style B fill:#dc2626,stroke:#b91c1c,stroke-width:3px,color:#ffffff
+    style C fill:#7c3aed,stroke:#6d28d9,stroke-width:3px,color:#ffffff
+    style D fill:#ea580c,stroke:#c2410c,stroke-width:3px,color:#ffffff
+    style E fill:#0891b2,stroke:#0e7490,stroke-width:3px,color:#ffffff
+    style F fill:#059669,stroke:#047857,stroke-width:3px,color:#ffffff
+    style G fill:#be185d,stroke:#9d174d,stroke-width:3px,color:#ffffff
+    style H fill:#1f2937,stroke:#111827,stroke-width:3px,color:#ffffff
+    style I fill:#65a30d,stroke:#4d7c0f,stroke-width:3px,color:#ffffff
 ```
 
 #### 2.4 Optimization Techniques
