@@ -20,6 +20,46 @@
 KrishiRakshak is a comprehensive AI solution that combines real-time plant disease classification with actionable agricultural advisory. Our system is designed to help rural farmers quickly identify and manage plant diseases through:
 
 ### Key Features
+
+1. **Explainable AI with Grad-CAM**
+   - Visual heatmaps showing which parts of the leaf the model is focusing on
+   - Helps build trust with farmers by making AI decisions interpretable
+   - Integrated directly into the prediction interface
+
+2. **Multilingual Support**
+   - Currently supports English, Hindi (हिंदी), and Marathi (मराठी)
+   - Simple language selector in the UI
+   - All predictions and interface elements are translated
+   - Easy to add more languages by updating the translations file
+
+3. **User-Friendly Interface**
+   - Simple drag-and-drop image upload
+   - Side-by-side comparison of original and heatmap views
+   - Mobile-responsive design for field use
+   - Works offline once the model is downloaded
+
+4. **Technical Highlights**
+   - Built with PyTorch and PyTorch Lightning
+   - Optimized for CPU inference
+   - Lightweight and fast predictions
+   - Easy to extend with new disease classes
+
+## Quick Start
+
+For detailed setup and usage instructions, please see our [Quick Start Guide](docs/QUICKSTART.md).
+
+## Project Overview
+
+KrishiRakshak is a comprehensive AI solution that combines real-time plant disease classification with actionable agricultural advisory. Our system is designed to help rural farmers quickly identify and manage plant diseases through:
+
+---
+
+### 📖 Read Our Journey
+Curious about the story and purpose behind KrishiRakshak? [Read the journey behind KrishiRakshak](docs/journey.md) to learn how and why this project was built, directly from the creator.
+
+---
+
+### Key Features
 1. **Real-Time Disease Detection**
    - AI-powered disease identification
    - Offline operation in remote areas

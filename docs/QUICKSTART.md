@@ -20,8 +20,49 @@ KrishiRakshak is designed to:
 - Comprehensive evaluation metrics
 - Resource-optimized training
 - Offline-first deployment
+- Explainable AI with Grad-CAM
+- Multilingual support (English, Hindi, Marathi)
 
-This guide will help you set up the development environment and get started with the KrishiRakshak project.
+## Getting Started with the Web Interface
+
+1. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Download the Pre-trained Model**
+   - Place your trained model at `models/krishirakshak_model.pt`
+   - Or update the `MODEL_PATH` in `app.py` to point to your model
+
+3. **Launch the Web Interface**
+   ```bash
+   python app.py
+   ```
+   - Open the provided URL in your web browser
+   - The interface will be available at `http://localhost:7860`
+
+4. **Using the Interface**
+   - Select your preferred language from the dropdown
+   - Upload an image of a plant leaf
+   - Click "Predict" to see the results
+   - Toggle between different views (Original, Heatmap, Overlay)
+
+## For Developers
+
+### Adding New Languages
+1. Edit `src/utils/translations.py`
+2. Add a new language code and translations to the `TRANSLATIONS` dictionary
+3. Add disease name translations to `DISEASE_TRANSLATIONS`
+
+### Customizing the Model
+- Update the model architecture in `src/models/plant_model.py`
+- Modify training parameters in `src/config.py`
+- Retrain the model using `src/train.py`
+
+### Extending Functionality
+- The Grad-CAM implementation is in `src/utils/gradcam.py`
+- UI components are defined in `app.py`
+- All translations are managed in `src/utils/translations.py`
 
 ## Prerequisites
 
