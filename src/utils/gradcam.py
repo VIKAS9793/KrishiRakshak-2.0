@@ -1,181 +1,176 @@
-"""
-Gradient-weighted Class Activation Mapping (Grad-CAM) implementation for PyTorch models.
-
-This module provides functionality to generate Grad-CAM visualizations for CNN models,
-highlighting the regions of the input image that were most important for the model's prediction.
-"""
-from typing import Tuple, Optional, List, Any, Dict
+import cv2
 import numpy as np
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
-import cv2
-
+from typing import Tuple, List, Optional
 
 class GradCAM:
     """
-    Compute Gradient-weighted Class Activation Mapping (Grad-CAM) for PyTorch models.
-    
-    This class uses forward and backward hooks to capture activations and gradients
-    from a target convolutional layer to generate class-discriminative localization maps.
-    It is designed to be used as a context manager to ensure hooks are properly removed.
-    
-    Attributes:
-        model: The PyTorch model to analyze.
-        target_layer: The target convolutional layer module.
-        gradient: Stores gradients from the backward pass.
-        activation: Stores activations from the forward pass.
+    Generates a Grad-CAM heatmap for a given model and target layer, indicating
+    the regions of an image that are important for a specific class prediction.
+
+    This implementation is designed to be robust and easy to use. It should be
+    used as a context manager to ensure that hooks are properly removed.
+
+    Key Improvements:
+    - Robustness: Validates the target layer name to prevent crashes.
+    - Clarity: Includes comprehensive docstrings and type hints.
+    - Device-Agnostic: Automatically detects and uses the model's device (CPU/GPU).
+    - Resource Management: Uses a context manager (`with`) for automatic hook cleanup.
+    - Explicit Control: Allows specifying which image in a batch to process.
+
+    Example Usage:
+        # Assuming `model`, `input_tensor` are defined and on the correct device.
+        try:
+            # Use the last convolutional layer of a ResNet-like model
+            with GradCAM(model=model, target_layer_name='layer4.2.conv3') as cam_generator:
+                scores = model(input_tensor)
+                class_idx = torch.argmax(scores[0]).item()
+                heatmap = cam_generator(class_idx=class_idx, scores=scores)
+        except (ValueError, RuntimeError) as e:
+            print(f"Error: {e}")
     """
-    
-    def __init__(self, model: torch.nn.Module, target_layer_name: str):
+
+    def __init__(self, model: nn.Module, target_layer_name: str):
         """
-        Initialize Grad-CAM with a model and target layer name.
-        
         Args:
-            model: PyTorch model to analyze.
-            target_layer_name: Name of the target convolutional layer (e.g., 'features.18').
-            
-        Raises:
-            ValueError: If the target layer is not found in the model.
+            model (nn.Module): The model to generate the CAM for.
+            target_layer_name (str): The name of the target layer to hook into.
         """
-        self.model = model.eval() # Set model to evaluation mode
+        self.model = model
+        self.model.eval()
+        self.device = next(model.parameters()).device
         self.target_layer = self._find_target_layer(target_layer_name)
-        if self.target_layer is None:
-            raise ValueError(f"Target layer '{target_layer_name}' not found in model.")
+        self.activations: Optional[torch.Tensor] = None
+        self.gradients: Optional[torch.Tensor] = None
+        self.hooks: List[torch.utils.hooks.RemovableHandle] = []
 
-        self.gradient: Optional[torch.Tensor] = None
-        self.activation: Optional[torch.Tensor] = None
-        self.hook_handles: List[torch.utils.hooks.RemovableHandle] = []
-
-    def _find_target_layer(self, layer_name: str) -> Optional[torch.nn.Module]:
-        """Utility to find a module by its string name."""
+    def _find_target_layer(self, layer_name: str) -> nn.Module:
+        """Finds the target layer module by its name and raises an error if not found."""
         for name, module in self.model.named_modules():
             if name == layer_name:
                 return module
-        return None
-
-    def _capture_gradient(self, grad: torch.Tensor) -> None:
-        """Hook for capturing the gradient of the target layer's output."""
-        self.gradient = grad
-
-    def _capture_activation(self, module: torch.nn.Module, input_tensors: Tuple[torch.Tensor], output_tensor: torch.Tensor) -> None:
-        """Hook for capturing the activation and registering a gradient hook."""
-        self.activation = output_tensor.detach()
-        # Register a backward hook on the activation tensor to capture gradients
-        self.hook_handles.append(output_tensor.register_hook(self._capture_gradient))
-
-    def _normalize_cam(self, cam: np.ndarray) -> np.ndarray:
-        """Normalize the class activation map to the [0, 1] range."""
-        cam = np.maximum(cam, 0)
-        min_val, max_val = np.min(cam), np.max(cam)
         
-        # Avoid division by zero
-        if max_val - min_val > 1e-7:
-            cam = (cam - min_val) / (max_val - min_val)
-        else:
-            return np.zeros_like(cam)
-            
-        return cam
+        available_layers = [name for name, module in self.model.named_modules() if isinstance(module, nn.Conv2d)]
+        raise ValueError(
+            f"Target layer '{layer_name}' not found. "
+            f"Consider one of the following convolutional layers: {available_layers}"
+        )
 
-    def generate(self, input_tensor: torch.Tensor, target_class: Optional[int] = None) -> np.ndarray:
+    def _forward_hook(self, module: nn.Module, input: Tuple[torch.Tensor], output: torch.Tensor):
+        """Saves the activations from the forward pass."""
+        self.activations = output.detach().to(self.device)
+
+    def _backward_hook(self, module: nn.Module, grad_input: Tuple[torch.Tensor], grad_output: Tuple[torch.Tensor]):
+        """Saves the gradients from the backward pass."""
+        self.gradients = grad_output[0].detach().to(self.device)
+
+    def _register_hooks(self):
+        """Registers the forward and backward hooks."""
+        self.hooks.append(self.target_layer.register_forward_hook(self._forward_hook))
+        self.hooks.append(self.target_layer.register_full_backward_hook(self._backward_hook))
+
+    def _remove_hooks(self):
+        """Removes all registered hooks."""
+        for hook in self.hooks:
+            hook.remove()
+        self.hooks = []
+
+    def __call__(self, class_idx: int, scores: torch.Tensor, batch_idx: int = 0) -> np.ndarray:
         """
-        Generate the Grad-CAM heatmap.
-        
-        This method orchestrates the forward and backward passes to compute the heatmap.
-        
+        Generates the Grad-CAM heatmap.
+
         Args:
-            input_tensor: Input image tensor of shape (1, C, H, W).
-            target_class: Target class index. If None, the predicted class is used.
-            
+            class_idx (int): The index of the class to generate the CAM for.
+            scores (torch.Tensor): The output logits/scores from the model.
+            batch_idx (int, optional): The index of the image in the batch to process. Defaults to 0.
+
         Returns:
-            Normalized class activation map as a numpy array (H, W).
-            
-        Raises:
-            RuntimeError: If hooks fail to capture activation or gradient.
+            np.ndarray: A 2D numpy array representing the normalized heatmap (0 to 1).
         """
-        # Register the forward hook
-        forward_hook = self.target_layer.register_forward_hook(self._capture_activation)
-        self.hook_handles.append(forward_hook)
-
-        # 1. Forward pass
-        with torch.set_grad_enabled(True):
-            output = self.model(input_tensor)
+        if not self.hooks:
+            raise RuntimeError("Hooks are not registered. Use as a context manager ('with' statement).")
+            
+        one_hot = torch.zeros_like(scores, device=self.device)
+        one_hot[batch_idx, class_idx] = 1
         
-        if target_class is None:
-            target_class = output.argmax(dim=1).item()
-
-        # 2. Backward pass
         self.model.zero_grad()
-        one_hot = torch.zeros_like(output)
-        one_hot[0][target_class] = 1.0
-        output.backward(gradient=one_hot, retain_graph=False)
-        
-        # Ensure hooks have captured the necessary data
-        if self.activation is None or self.gradient is None:
-            self.remove_hooks()
-            raise RuntimeError("Failed to capture activation or gradient. Check target layer and model structure.")
+        scores.backward(gradient=one_hot, retain_graph=True)
 
-        # 3. Compute CAM
-        weights = torch.mean(self.gradient, dim=(2, 3), keepdim=True)
-        cam = torch.sum(weights * self.activation, dim=1, keepdim=True)
-        cam = F.relu(cam).squeeze().cpu().numpy()
-        
-        # Clean up all hooks immediately after use
-        self.remove_hooks()
-        
-        return self._normalize_cam(cam)
+        if self.activations is None or self.gradients is None:
+            raise RuntimeError("Could not retrieve activations or gradients.")
 
-    def remove_hooks(self) -> None:
-        """Remove all registered hooks."""
-        for handle in self.hook_handles:
-            handle.remove()
-        self.hook_handles.clear()
+        activations = self.activations[batch_idx]
+        gradients = self.gradients[batch_idx]
+        weights = F.adaptive_avg_pool2d(gradients, 1)
+        
+        cam = torch.sum(weights * activations, dim=0)
+        cam = F.relu(cam)
+
+        cam -= torch.min(cam)
+        cam /= (torch.max(cam) + 1e-8)
+
+        return cam.cpu().numpy()
 
     def __enter__(self):
+        self._register_hooks()
         return self
-
+    
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.remove_hooks()
+        self._remove_hooks()
 
 
-def apply_gradcam(
-    grad_cam_instance: GradCAM,
-    input_tensor: torch.Tensor,
+def apply_gradcam_overlay(
     original_image: np.ndarray,
-    target_class: Optional[int] = None,
-    alpha: float = 0.5
-) -> Tuple[np.ndarray, np.ndarray]:
+    heatmap: np.ndarray,
+    alpha: float = 0.5,
+    colormap: int = cv2.COLORMAP_JET
+) -> np.ndarray:
     """
-    Apply Grad-CAM to an image and generate a visual overlay.
+    Applies a Grad-CAM heatmap overlay on the original image.
     
     Args:
-        grad_cam_instance: An initialized GradCAM object.
-        input_tensor: Preprocessed input tensor (1, C, H, W).
-        original_image: Original image (H, W, C) in RGB format with values in [0, 255].
-        target_class: Target class index. If None, uses the predicted class.
-        alpha: Opacity of the heatmap overlay [0, 1].
+        original_image: Input image in RGB format, shape (H, W, 3), values in [0, 255]
+        heatmap: 2D heatmap, shape (H', W'), values in [0, 1]
+        alpha: Opacity of the heatmap overlay [0, 1]
+        colormap: OpenCV colormap constant (e.g., cv2.COLORMAP_JET)
         
     Returns:
-        A tuple of (heatmap, overlay_image) as numpy arrays. The overlay is in RGB format.
+        Overlayed image in RGB format, same shape as original_image
+        
+    Raises:
+        ValueError: If inputs are invalid
     """
+    if not (0 <= alpha <= 1):
+        raise ValueError(f"alpha must be between 0 and 1, got {alpha}")
+        
     if not (isinstance(original_image, np.ndarray) and original_image.ndim == 3):
-        raise ValueError("original_image must be a 3D numpy array (H, W, C).")
+        raise ValueError(f"original_image must be 3D numpy array, got {type(original_image)}")
+        
+    if not (isinstance(heatmap, np.ndarray) and heatmap.ndim == 2):
+        raise ValueError(f"heatmap must be 2D numpy array, got {type(heatmap)}")
+        
+    if not (0 <= heatmap.min() and heatmap.max() <= 1.0001): # Allow for small floating point inaccuracies
+        raise ValueError(f"heatmap values must be in range [0, 1], but found min: {heatmap.min()}, max: {heatmap.max()}")
     
-    # Generate heatmap data (normalized to [0, 1])
-    heatmap_data = grad_cam_instance.generate(input_tensor, target_class)
+    # Convert heatmap to uint8 and apply colormap
+    heatmap_uint8 = (heatmap * 255).astype(np.uint8)
+    heatmap_colored = cv2.applyColorMap(heatmap_uint8, colormap)
     
-    # Create a colored heatmap
-    heatmap = (heatmap_data * 255).astype(np.uint8)
-    heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+    # Resize heatmap to match original image dimensions
+    if heatmap.shape != original_image.shape[:2]:
+        heatmap_colored = cv2.resize(heatmap_colored, 
+                                     (original_image.shape[1], original_image.shape[0]))
     
-    # Resize heatmap to match the original image
-    heatmap = cv2.resize(heatmap, (original_image.shape[1], original_image.shape[0]))
+    # Convert to BGR for OpenCV if it's a color image
+    if original_image.shape[2] == 3: # RGB to BGR
+        original_bgr = cv2.cvtColor(original_image.astype(np.uint8), cv2.COLOR_RGB2BGR)
+    else: # Grayscale
+        original_bgr = original_image.astype(np.uint8)
     
-    # Superimpose the heatmap on the original image
-    # Convert original image to BGR for OpenCV
-    image_bgr = cv2.cvtColor(original_image, cv2.COLOR_RGB2BGR)
-    overlay = cv2.addWeighted(image_bgr, 1 - alpha, heatmap, alpha, 0)
+    # Blend images
+    overlay = cv2.addWeighted(original_bgr, 1 - alpha, heatmap_colored, alpha, 0)
     
-    # Convert the final overlay back to RGB
-    overlay_rgb = cv2.cvtColor(overlay, cv2.COLOR_BGR2RGB)
-    
-    return heatmap, overlay_rgb
+    # Convert back to RGB for consistency
+    return cv2.cvtColor(overlay, cv2.COLOR_BGR2RGB)
