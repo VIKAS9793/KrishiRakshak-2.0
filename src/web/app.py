@@ -221,5 +221,5 @@ def create_ui():
 
 if __name__ == "__main__":
     # Create and launch the Gradio app
-    krishirakshak_ui = create_ui()
-    krishirakshak_ui.launch()
+    app = create_ui()
+    app.launch()

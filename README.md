@@ -7,6 +7,29 @@
   <img src="assets/logos/logo.png?raw=true" alt="KrishiRakshak Logo" width="200">
 </p>
 
+## 🤖 About the Project
+
+KrishiRakshak is an **AI-powered plant disease detection system** that leverages **Deep Learning** and **Computer Vision** to help farmers identify crop diseases early and accurately. Built with **PyTorch** and **Gradio**, it provides an intuitive interface for real-time disease classification with explainable AI visualizations.
+
+### Core AI/ML Technologies
+
+- **Deep Learning Model**: Utilizes a fine-tuned **MobileNetV3 Large** architecture for efficient and accurate disease classification
+- **Computer Vision**: Processes plant leaf images to detect visual patterns and symptoms of diseases
+- **Explainable AI (XAI)**: Implements **Grad-CAM** visualizations to highlight disease-affected areas in the input images
+- **Transfer Learning**: Leverages pre-trained weights from ImageNet for improved performance with limited training data
+- **Model Optimization**: Supports model export to ONNX format for efficient deployment
+
+### Key Features
+
+- 🌍 **Multilingual Support**: Available in English, Hindi, and Marathi
+- 🔍 **Disease Classification**: Identifies 38 different plant diseases across multiple crops
+- 📊 **Confidence Scores**: Provides prediction confidence levels for better decision making
+- 🖼️ **Visual Explanations**: Highlights affected areas using heatmap visualizations
+- 📱 **Web Interface**: User-friendly Gradio-based web application
+- 📊 **Performance Metrics**: Tracks model performance with comprehensive metrics (accuracy, F1-score, precision, recall)
+- 🔄 **Model Export**: Export trained models in PyTorch (.pth) and ONNX formats for deployment
+- 📈 **Experiment Tracking**: Optional integration with Weights & Biases for experiment tracking
+
 ## Getting Started
 
 1. **Clone the Repository**
@@ -40,9 +63,10 @@ KrishiRakshak is a comprehensive AI solution that combines real-time plant disea
 
 4. **Technical Highlights**
    - Built with PyTorch and PyTorch Lightning
-   - Optimized for CPU inference
-   - Lightweight and fast predictions
-   - Easy to extend with new disease classes
+   - MobileNetV3 Large architecture for efficient inference
+   - Optimized for both CPU and GPU
+   - Model export to PyTorch and ONNX formats
+   - Experiment tracking with Weights & Biases
 
 ## Quick Start
 
