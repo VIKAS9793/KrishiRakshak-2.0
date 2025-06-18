@@ -4,18 +4,25 @@ Following 2024-2025 state-of-the-art practices
 """
 import os
 import warnings
+import yaml
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Tuple, Any
+from typing import Dict, List, Optional, Union, Tuple, Any, TypeVar
 
 import torch
 import torch.nn as nn
-from torch.optim import AdamW
-from torch.optim.lr_scheduler import OneCycleLR, CosineAnnealingWarmRestarts
+from torch.optim import AdamW, Optimizer
+from torch.optim.lr_scheduler import (
+    OneCycleLR, 
+    CosineAnnealingWarmRestarts, 
+    _LRScheduler,
+    ReduceLROnPlateau
+)
 import timm
 
 # Modern augmentation
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
+from albumentations.core.composition import Compose as AlbumentationsCompose
 
 # Metrics
 from torchmetrics import MetricCollection, Accuracy, F1Score, Precision, Recall, AUROC
@@ -36,11 +43,6 @@ class Config:
     COMPILE_MODEL = True  # PyTorch 2.0+ compilation
     COMPILE_MODE = "default"  # Options: "default", "reduce-overhead", "max-autotune"
     
-    # Advanced data loading
-    PERSISTENT_WORKERS = True
-    MULTIPROCESSING_CONTEXT = "spawn"  # Better for CUDA
-    CACHE_IMAGES = True  # Set False if memory is limited
-    
     # ========== Data Loading ==========
     # Hardware-specific settings
     if DEVICE == "cuda":
@@ -59,9 +61,8 @@ class Config:
     # Advanced data loading
     PERSISTENT_WORKERS = True  # Modern DataLoader optimization
     MULTIPROCESSING_CONTEXT = "spawn"  # Better for CUDA
-    
-    # Image caching (set to False if memory is limited)
-    CACHE_IMAGES = True
+    CACHE_IMAGES = True  # Set False if memory is limited
+    MIN_SAMPLES_PER_CLASS = 5  # Minimum samples required per class for training
         
     # ========== Training Parameters ==========
     # Training loop
@@ -80,13 +81,12 @@ class Config:
     EPS = 1e-8
     
     # Scheduler
-    SCHEDULER = "onecycle"
-    LR_SCHEDULER = "reduce_on_plateau"
+    SCHEDULER = "onecycle"  # Options: "onecycle", "cosine", "reduce_on_plateau"
     MAX_LR = 3e-3
     MIN_LR = 1e-6
-    LR_FACTOR = 0.1
-    LR_PATIENCE = 5
     WARMUP_EPOCHS = 5
+    LR_PATIENCE = 5  # For reduce_on_plateau
+    LR_FACTOR = 0.1  # For reduce_on_plateau
     
     # Regularization
     DROPOUT_RATE = 0.2
@@ -176,30 +176,27 @@ class Config:
     REPORTS_DIR = ROOT_DIR / "reports"
     SRC_DIR = ROOT_DIR / "src"
     
-    # Create required directories
-    for dir_path in [
-        MODEL_DIR, 
-        LOGS_DIR, 
-        REPORTS_DIR, 
-        FIXED_DATA_DIR,
-        PROCESSED_DATA_DIR,
-        DATA_DIR
-    ]:
-        dir_path.mkdir(parents=True, exist_ok=True)
+    @classmethod
+    def setup_directories(cls):
+        """Create all necessary project directories."""
+        for dir_path in [
+            cls.MODEL_DIR, 
+            cls.LOGS_DIR, 
+            cls.REPORTS_DIR, 
+            cls.FIXED_DATA_DIR,
+            cls.PROCESSED_DATA_DIR,
+            cls.DATA_DIR,
+            cls.CHECKPOINT_DIR
+        ]:
+            dir_path.mkdir(parents=True, exist_ok=True)
     
     # ========== Logging and Checkpoints ==========
     CHECKPOINT_DIR = MODEL_DIR / "checkpoints"
     CHECKPOINT_SAVE_TOP_K = 3
     MONITOR_METRIC = "val_loss"
     MODE = "min"
-    
-    # Logging
     LOGGER = "tensorboard"
     LOG_EVERY_N_STEPS = 10
-    
-    # Experiment
-    EXPERIMENT_NAME = "krishirakshak"  # For experiment tracking
-    
     @classmethod
     def log_hardware_info(cls):
         """Log detailed hardware and configuration information."""
@@ -238,8 +235,18 @@ class Config:
         print("\n".join(["="*50, "KrishiRakshak Configuration", "="*50] + info + ["="*50]))
     
     @classmethod
-    def get_optimizer(cls, model: nn.Module) -> torch.optim.Optimizer:
-        """Get configured optimizer."""
+    def get_optimizer(cls, model: nn.Module) -> Optimizer:
+        """Get configured optimizer.
+        
+        Args:
+            model: The model whose parameters will be optimized
+            
+        Returns:
+            Configured optimizer
+            
+        Raises:
+            ValueError: If the specified optimizer is not supported
+        """
         if cls.OPTIMIZER.lower() == "adamw":
             return AdamW(
                 model.parameters(),
@@ -251,8 +258,20 @@ class Config:
         raise ValueError(f"Unsupported optimizer: {cls.OPTIMIZER}")
     
     @classmethod
-    def get_scheduler(cls, optimizer, steps_per_epoch: int):
-        """Get learning rate scheduler."""
+    def get_scheduler(
+        cls, 
+        optimizer: Optimizer, 
+        steps_per_epoch: int
+    ) -> Optional[Union[OneCycleLR, CosineAnnealingWarmRestarts, ReduceLROnPlateau]]:
+        """Get learning rate scheduler.
+        
+        Args:
+            optimizer: The optimizer to wrap with the scheduler
+            steps_per_epoch: Number of steps per training epoch
+            
+        Returns:
+            Configured learning rate scheduler or None if no scheduler is specified
+        """
         if cls.SCHEDULER == "onecycle":
             return OneCycleLR(
                 optimizer,
@@ -270,6 +289,14 @@ class Config:
                 T_0=10,
                 T_mult=1,
                 eta_min=cls.MIN_LR
+            )
+        elif cls.SCHEDULER == "reduce_on_plateau":
+            return ReduceLROnPlateau(
+                optimizer,
+                mode='min',
+                factor=cls.LR_FACTOR,
+                patience=cls.LR_PATIENCE,
+                min_lr=cls.MIN_LR
             )
         return None
     
@@ -370,114 +397,85 @@ class Config:
         return A.Compose(transforms, p=cls.AUGMENTATION_PROB)
         
     @classmethod
-    def get_val_transforms(cls):
-        """Get validation data transformation pipeline with TTA support."""
+    def _get_base_transforms(cls, tta: bool = False):
+        """Get base transforms used for validation and test."""
         import albumentations as A
         from albumentations.pytorch import ToTensorV2
         
-        return A.Compose([
+        transforms = [
             A.Resize(
                 height=cls.IMG_SIZE,
                 width=cls.IMG_SIZE,
                 interpolation=1,  # Bilinear
                 p=1.0
-            ),
-            A.Normalize(
-                mean=cls.MEAN,
-                std=cls.STD,
-                max_pixel_value=255.0,
-                p=1.0
-            ),
-            ToTensorV2(p=1.0),
-        ], p=1.0)
+            )
+        ]
+        
+        if not tta:
+            transforms.extend([
+                A.Normalize(
+                    mean=cls.MEAN,
+                    std=cls.STD,
+                    max_pixel_value=255.0,
+                    p=1.0
+                ),
+                ToTensorV2(p=1.0)
+            ])
+        
+        return transforms
     
     @classmethod
-    def get_tta_transforms(cls):
-        """Get test-time augmentation transforms."""
-        import albumentations as A
-        from albumentations.pytorch import ToTensorV2
+    def get_val_transforms(cls) -> A.Compose:
+        """Get validation data transformation pipeline.
         
-        base_transform = A.Compose([
-            A.Resize(
-                height=cls.IMG_SIZE,
-                width=cls.IMG_SIZE,
-                interpolation=1,
-                p=1.0
-            ),
-            A.Normalize(
-                mean=cls.MEAN,
-                std=cls.STD,
-                max_pixel_value=255.0,
-                p=1.0
-            ),
-            ToTensorV2(p=1.0),
-        ])
+        Returns:
+            Composed validation transforms
+        """
+        transforms = cls._get_base_transforms()
+        return A.Compose(transforms, p=1.0)
+    
+    @classmethod
+    def get_tta_transforms(cls) -> List[Any]:
+        """Get test-time augmentation transforms.
+        
+        Returns:
+            List of composed transforms for test-time augmentation
+        """
+        base_transforms = cls._get_base_transforms(tta=True)
         
         # Define TTA transforms
         tta_transforms = [
-            base_transform,  # Original
+            A.Compose([  # Original
+                *base_transforms,
+                A.Normalize(mean=cls.MEAN, std=cls.STD, max_pixel_value=255.0, p=1.0),
+                ToTensorV2(p=1.0)
+            ], p=1.0),
             A.Compose([  # Horizontal flip
                 A.HorizontalFlip(p=1.0),
-                *base_transform.transforms
-            ]),
+                *base_transforms,
+                A.Normalize(mean=cls.MEAN, std=cls.STD, max_pixel_value=255.0, p=1.0),
+                ToTensorV2(p=1.0)
+            ], p=1.0),
             A.Compose([  # Vertical flip
                 A.VerticalFlip(p=1.0),
-                *base_transform.transforms
-            ]),
-            A.Compose([  # Rotate 90
-                A.Rotate(limit=90, p=1.0),
-                *base_transform.transforms
-            ]),
-            A.Compose([  # Rotate 180
-                A.Rotate(limit=180, p=1.0),
-                *base_transform.transforms
-            ]),
+                *base_transforms,
+                A.Normalize(mean=cls.MEAN, std=cls.STD, max_pixel_value=255.0, p=1.0),
+                ToTensorV2(p=1.0)
+            ], p=1.0)
         ]
         
-        return tta_transforms[:cls.TTA_NUM_AUGS] if cls.TTA_NUM_AUGS > 1 else [base_transform]
+        return tta_transforms[:cls.TTA_NUM_AUGS] if cls.TTA_NUM_AUGS > 1 else tta_transforms[:1]
         
     @classmethod
-    def get_test_transforms(cls):
-        """Get test data transformation pipeline with TTA support."""
-        from albumentations import (
-            Compose, Resize, Normalize, HorizontalFlip, VerticalFlip, RandomRotate90
-        )
-        from albumentations.pytorch import ToTensorV2
+    def get_test_transforms(cls) -> Union[A.Compose, List[A.Compose]]:
+        """Get test data transformation pipeline with TTA support.
         
-        if cls.TTA_NUM_AUGS <= 1:
-            return cls.get_val_transforms()
-            
-        # Base transforms
-        base_transforms = [
-            Resize(height=cls.IMG_SIZE, width=cls.IMG_SIZE, p=1.0),
-            Normalize(mean=cls.MEAN, std=cls.STD, max_pixel_value=255.0, p=1.0),
-            ToTensorV2(p=1.0),
-        ]
-        
-        # Add TTA transforms
-        tta_transforms = []
-        for _ in range(cls.TTA_NUM_AUGS):
-            tta_transforms.append(Compose([
-                *base_transforms,
-                RandomRotate90(p=0.5),
-                HorizontalFlip(p=0.5),
-                VerticalFlip(p=0.5),
-            ], p=1.0))
-            
-        return tta_transforms
-    
-    @staticmethod
-    def get_val_test_transforms() -> Compose:
-        return Compose(
-            [
-                Resize(height=Config.IMAGE_SIZE[0], width=Config.IMAGE_SIZE[1]),
-                Normalize(
-                    mean=[0.485, 0.456, 0.406],
-                    std=[0.229, 0.224, 0.225],
-                ),
-                ToTensorV2(),
-            ]
-        )
+        Returns:
+            Either a single Compose transform or a list of transforms for TTA
+        """
+        if cls.TTA_NUM_AUGS > 1:
+            return cls.get_tta_transforms()
+        return cls.get_val_transforms()
     
     @classmethod
     def get_hardware_info(cls) -> Dict[str, str]:
@@ -501,39 +499,64 @@ class Config:
         return info
     
     @classmethod
-    def to_dict(cls) -> Dict[str, Union[str, int, float, bool]]:
-        """Convert config to dictionary for logging."""
-        config_dict = {
-            k: v
-            for k, v in cls.__dict__.items()
-            if not k.startswith("_") and k.isupper() and not callable(getattr(cls, k))
-        }
-        # Add hardware info
-        config_dict.update({"hardware_info": cls.get_hardware_info()})
+    def to_dict(cls) -> Dict[str, Any]:
+        """Convert config to dictionary."""
+        config_dict = {}
+        for key in dir(cls):
+            if key.isupper() and not key.startswith('_'):
+                config_dict[key] = getattr(cls, key)
         return config_dict
+        
+    @classmethod
+    def update_from_file(cls, file_path: Union[str, Path]) -> None:
+        """Update class attributes from a YAML file.
+        
+        Args:
+            file_path: Path to the YAML config file
+            
+        Raises:
+            FileNotFoundError: If config file doesn't exist
+            yaml.YAMLError: If config file is invalid YAML
+            ValueError: If config contains invalid keys
+        """
+        file_path = Path(file_path)
+        if not file_path.exists():
+            raise FileNotFoundError(f"Config file not found: {file_path}")
+            
+        with open(file_path, 'r') as f:
+            try:
+                data = yaml.safe_load(f) or {}
+            except yaml.YAMLError as e:
+                raise yaml.YAMLError(f"Invalid YAML in config file: {e}")
+        
+        # Only update existing attributes
+        for key, value in data.items():
+            key_upper = key.upper()
+            if hasattr(cls, key_upper):
+                setattr(cls, key_upper, value)
+            else:
+                warnings.warn(f"Ignoring unknown config key: {key}", UserWarning)
     
     @classmethod
-    def log_hardware_info(cls):
-        """Log hardware information."""
-        hw_info = cls.get_hardware_info()
-        print("\n" + "="*50)
-        print("Hardware Configuration:")
-        print("-"*50)
-        for k, v in hw_info.items():
-            print(f"{k.replace('_', ' ').title()}: {v}")
-        print("="*50 + "\n")
-    
-    # Experiment tracking
-    EXPERIMENT_NAME = "krishirakshak"
-    LOG_EVERY_N_STEPS = 10
-    
-    # Reproducibility
-    SEED = 42
-
-
-    @classmethod
-    def setup_training(cls, model: nn.Module, train_loader) -> tuple:
-        """Setup training components."""
+    def setup_training(
+        cls, 
+        model: nn.Module, 
+        train_loader: torch.utils.data.DataLoader
+    ) -> tuple[
+        nn.Module, 
+        Optimizer, 
+        Optional[Union[OneCycleLR, CosineAnnealingWarmRestarts, ReduceLROnPlateau]], 
+        Optional[torch.cuda.amp.GradScaler]
+    ]:
+        """Setup training components.
+        
+        Args:
+            model: The model to train
+            train_loader: Training data loader
+            
+        Returns:
+            Tuple of (model, optimizer, scheduler, scaler)
+        """
         # Set random seeds
         torch.manual_seed(cls.SEED)
         if torch.cuda.is_available():
@@ -557,5 +580,5 @@ class Config:
         
         return model, optimizer, scheduler, scaler
 
-# Initialize directories
-Config.setup_dirs()
+# Directory setup should be called explicitly from the main script
+# Example: Config.setup_directories()

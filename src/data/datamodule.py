@@ -8,18 +8,30 @@ classification task. It supports:
 - Test-time augmentation (TTA)
 - Distributed training support
 """
+import json
+import logging
 import os
 import random
 import warnings
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
+import albumentations as A
 import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
 import torch
-from PIL import Image, ImageFile
+from albumentations.pytorch import ToTensorV2
+from PIL import Image, ImageFile, UnidentifiedImageError
 from sklearn.model_selection import train_test_split
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Allow loading of truncated images
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
 from src.config import Config
@@ -50,13 +62,21 @@ class PlantDiseaseDataset(Dataset):
         
         Args:
             df: DataFrame containing 'image_path' and 'label' columns
-            transform: Albumentations transform pipeline
+            transform: Albumentations transform pipeline. If None, a minimal transform will be used.
             class_to_idx: Optional mapping from class names to indices
             is_test: If True, returns only images without labels
             cache_images: If True, cache images in memory for faster training
         """
         self.df = df.reset_index(drop=True)
-        self.transform = transform
+        
+        # Ensure we always have a transform
+        if transform is None:
+            self.transform = A.Compose([
+                A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                ToTensorV2()
+            ])
+        else:
+            self.transform = transform
         self.is_test = is_test
         self.cache_images = cache_images
         self.cache = {}
@@ -118,18 +138,18 @@ class PlantDiseaseDataset(Dataset):
                 
                 # Basic validation
                 if img_array.size == 0:
-                    raise ValueError("Empty image")
-                    
+                    raise ValueError(f"Empty image: {img_path}")
+                
                 # Cache if enabled
                 if self.cache_images:
                     self.cache[idx] = img_array
                     
                 return img_array
                 
-        except Exception as e:
+        except (IOError, ValueError, UnidentifiedImageError, OSError) as e:
             self.bad_indices.add(idx)
-            if len(self.bad_indices) < 10:  # Don't spam logs
-                print(f"Warning: Could not load image {img_path}: {str(e)}")
+            if len(self.bad_indices) < 10:  # Only log first 10 errors to avoid spam
+                logger.warning(f"Could not load image {img_path}: {str(e)}")
             return None
     
     def __len__(self) -> int:
@@ -160,13 +180,9 @@ class PlantDiseaseDataset(Dataset):
                 if img_array is None:
                     raise ValueError(f"Failed to load image at index {idx}")
                 
-                # Apply transforms
-                if self.transform:
-                    augmented = self.transform(image=img_array)
-                    img_tensor = augmented['image']
-                else:
-                    # Convert to tensor if no transform
-                    img_tensor = torch.from_numpy(img_array).permute(2, 0, 1).float() / 255.0
+                # Apply transforms - always use a transform
+                augmented = self.transform(image=img_array)
+                img_tensor = augmented['image']
                 
                 # Return based on mode
                 if self.is_test:
@@ -310,12 +326,11 @@ class PlantDiseaseDataModule(pl.LightningDataModule):
         df = pd.DataFrame(all_data)
         
         # Ensure we have enough samples per class
-        min_samples = 5  # Minimum samples needed per class
         class_counts = df['label'].value_counts()
-        valid_classes = class_counts[class_counts >= min_samples].index
+        valid_classes = class_counts[class_counts >= self.config.MIN_SAMPLES_PER_CLASS].index
         
         if len(valid_classes) < 2:
-            raise ValueError(f"Need at least 2 classes with {min_samples} samples each. "
+            raise ValueError(f"Need at least 2 classes with {self.config.MIN_SAMPLES_PER_CLASS} samples each. "
                            f"Found classes: {class_counts.to_dict()}")
         
         # Filter to only include valid classes

@@ -179,9 +179,9 @@ def train(config: Config, resume_from: Optional[str] = None) -> None:
     
     # Setup data - this will initialize train/val/test datasets
     datamodule.setup()
-    logging.info(f"Data loaded: {len(datamodule.train_dataset)} train, "
-                f"{len(datamodule.val_dataset)} val, "
-                f"{len(datamodule.test_dataset)} test samples")
+    logging.info(f"Data loaded: {len(datamodule.train_ds)} train, "
+                f"{len(datamodule.val_ds)} val, "
+                f"{len(datamodule.test_ds)} test samples")
     
     # Initialize model
     logging.info(f"Initializing model: {config.MODEL_NAME}")
@@ -228,13 +228,25 @@ def train(config: Config, resume_from: Optional[str] = None) -> None:
     
     # Log model architecture
     try:
-        if hasattr(trainer.logger, 'experiment'):
+        if hasattr(trainer.logger, 'experiment') and hasattr(trainer.logger.experiment, 'add_graph'):
             sample_batch = next(iter(datamodule.train_dataloader()))
-            sample_input = sample_batch['image'][:1]
-            if hasattr(trainer.logger.experiment, 'add_graph'):
-                trainer.logger.experiment.add_graph(model, sample_input)
+            
+            # Handle different batch formats
+            if isinstance(sample_batch, dict):
+                sample_input = sample_batch['image'][:1]
+            elif isinstance(sample_batch, (list, tuple)):
+                sample_input = sample_batch[0][:1]  # Assume image is first element
+            else:
+                sample_input = sample_batch[:1]  # Try direct indexing as last resort
+                
+            # Move to device if needed
+            if hasattr(model, 'device'):
+                sample_input = sample_input.to(model.device)
+                
+            trainer.logger.experiment.add_graph(model, sample_input)
+            logging.info("Successfully logged model graph")
     except Exception as e:
-        logging.warning(f"Could not log model graph: {e}")
+        logging.warning(f"Could not log model graph: {e}", exc_info=True)
     
     # Training loop
     try:
@@ -310,62 +322,59 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     """Main training function."""
-    args = parse_args()
-    
-    # Setup logging first
-    setup_logging(args.log_level)
-    
-    # Initialize configuration
-    config = Config()
-    
-    # Override config from file if provided
-    if args.config:
-        if Path(args.config).exists():
-            config.update_from_file(args.config)
-            logging.info(f"Configuration loaded from {args.config}")
-        else:
-            logging.error(f"Config file not found: {args.config}")
-            sys.exit(1)
-    
-    # Override config with command line arguments
-    arg_dict = vars(args)
-    for key, value in arg_dict.items():
-        if value is not None:
-            # Convert argument names to config attribute names
-            config_key = key.upper().replace('-', '_')
-            if hasattr(config, config_key):
-                setattr(config, config_key, value)
-                logging.info(f"Config override: {config_key} = {value}")
-    
-    # Set debug mode
-    if args.debug:
-        config.FAST_DEV_RUN = True
-        config.NUM_EPOCHS = 2
-        config.LOG_EVERY_N_STEPS = 1
-        logging.info("Debug mode enabled")
-    
-    # Set random seed
-    seed = getattr(config, 'SEED', 42)
-    set_seed(seed)
-    
-    # Create necessary directories
-    Path(config.CHECKPOINT_DIR).mkdir(parents=True, exist_ok=True)
-    Path(config.LOGS_DIR).mkdir(parents=True, exist_ok=True)
-    
-    # Log final configuration
-    logging.info("Final configuration:")
-    for attr_name in sorted(dir(config)):
-        if not attr_name.startswith('_') and not callable(getattr(config, attr_name)):
-            logging.info(f"  {attr_name}: {getattr(config, attr_name)}")
-    
     try:
+        # Parse command line arguments
+        args = parse_args()
+        
+        # Setup logging
+        setup_logging(log_level=getattr(args, 'log_level', 'INFO'))
+        logging.info("Starting KrishiRakshak training")
+        
+        # Initialize config
+        config = Config()
+        
+        # Update config from file if provided
+        if args.config:
+            logging.info(f"Loading configuration from {args.config}")
+            config.update_from_file(args.config)
+        
+        # Override config with command line arguments
+        for arg, value in vars(args).items():
+            if value is not None and hasattr(config, arg.upper()):
+                setattr(config, arg.upper(), value)
+                logging.info(f"Config override: {arg.upper()} = {value}")
+        
+        # Set debug mode
+        if args.debug:
+            config.FAST_DEV_RUN = True
+            config.NUM_EPOCHS = 2
+            config.LOG_EVERY_N_STEPS = 1
+            logging.info("Debug mode enabled")
+        
+        # Set random seed early for reproducibility
+        seed = getattr(config, 'SEED', 42)
+        set_seed(seed)
+        
+        # Create all necessary directories
+        logging.info("Setting up project directories...")
+        config.setup_directories()
+        
+        # Log final configuration
+        logging.info("Final configuration:")
+        for attr_name in sorted(dir(config)):
+            if attr_name.isupper() and not attr_name.startswith('_'):
+                logging.info(f"  {attr_name}: {getattr(config, attr_name)}")
+        
         # Start training
         train(config, resume_from=args.resume)
+        
     except Exception as e:
-        logging.error(f"Training failed: {str(e)}", exc_info=True)
+        logging.error(f"Fatal error in main: {str(e)}", exc_info=True)
         sys.exit(1)
+    finally:
+        logging.info("Training script finished")
 
 
 if __name__ == "__main__":

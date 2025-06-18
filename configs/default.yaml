@@ -1,0 +1,60 @@
+# KrishiRakshak Training Configuration
+# This file contains default training parameters that can be overridden via command line
+
+# Model configuration
+MODEL_NAME: "resnet50"
+PRETRAINED: true
+NUM_CLASSES: 38  # Should match your dataset
+DROPOUT_RATE: 0.1
+LABEL_SMOOTHING: 0.1
+
+# Training configuration
+BATCH_SIZE: 32
+NUM_EPOCHS: 50
+LEARNING_RATE: 0.001
+WEIGHT_DECAY: 0.01
+GRADIENT_CLIP_VAL: 1.0
+PRECISION: "16-mixed"
+
+# Data configuration
+DATA_DIR: "data/plantvillage"
+NUM_WORKERS: 4
+PIN_MEMORY: true
+PERSISTENT_WORKERS: true
+IMAGE_SIZE: [224, 224]
+
+# Augmentation
+USE_ADVANCED_COLOR_AUG: true  # Previously USE_AUTOAUGMENT
+RANDOM_ERASE_PROB: 0.1
+MIXUP_ALPHA: 0.2
+CUTMIX_ALPHA: 1.0
+
+# Scheduler
+SCHEDULER: "cosine"  # Options: "onecycle", "cosine", "reduce_on_plateau"
+MIN_LR: 1e-6
+LR_FACTOR: 0.1
+LR_PATIENCE: 5
+
+# Early stopping
+EARLY_STOPPING_PATIENCE: 10
+MIN_DELTA: 0.001
+
+# Logging and checkpoints
+EXPERIMENT_NAME: "krishirakshak"
+LOG_EVERY_N_STEPS: 10
+CHECKPOINT_SAVE_TOP_K: 3
+MONITOR_METRIC: "val_loss"
+MODE: "min"  # "min" for loss, "max" for accuracy
+
+# System
+SEED: 42
+DETERMINISTIC: true
+BENCHMARK: false
+COMPILE_MODEL: true
+FAST_DEV_RUN: false  # Set to true for quick testing
+
+# Advanced
+USE_SWA: false  # Stochastic Weight Averaging
+USE_WANDB: true  # Weights & Biases logging
+WANDB_PROJECT: "krishi-rakshak"
+WANDB_ENTITY: "vikassahani17-aditya-birla-capital"  # W&B username

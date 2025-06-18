@@ -8,10 +8,19 @@ using the Translator module.
 import gradio as gr
 from PIL import Image
 import numpy as np
+from pathlib import Path
+import sys
 
-# Assume the Translator class from the Canvas is saved in 'utils/translations.py'
-# If the file is in the same directory, you can use: from your_file_name import translator
+# Add src directory to path for module imports
+sys.path.append(str(Path(__file__).parent.parent))
+
+# Local imports
 from utils.translations import translator
+from utils.advisory import AdvisoryService, ADVISORY_DATA, TRANSLATIONS
+
+# --- Constants ---
+DEFAULT_LANG = 'English'
+DEFAULT_LANG_CODE = 'en'
 
 # --- Mock Model for Demonstration ---
 class MockModel:
@@ -43,9 +52,11 @@ class MockModel:
 # --- UI Creation ---
 def create_ui():
     """Builds and launches the Gradio web interface."""
-    
-    # Initialize the model
+    # Initialize the mock model
     model = MockModel()
+    
+    # Initialize the advisory service
+    advisory_service = AdvisoryService(ADVISORY_DATA, TRANSLATIONS)
     
     # Get available languages and create a mapping from name to code (e.g., "English" -> "en")
     available_langs = translator.get_available_languages()
@@ -60,25 +71,43 @@ def create_ui():
             lang_name: The selected language name from the UI (e.g., "English").
             
         Returns:
-            A tuple containing the translated disease name, confidence score, and heatmap.
+            A tuple containing:
+            - Translated disease name
+            - Confidence score
+            - Heatmap image
+            - Advisory information (HTML formatted)
+            
+        Raises:
+            gr.Error: If no image is provided.
         """
+        # Get language code once at the start
+        lang_code = lang_name_to_code.get(lang_name, DEFAULT_LANG_CODE)
+        
         if image is None:
-            # Get the language code to translate the error message
-            lang_code = lang_name_to_code.get(lang_name, 'en')
             error_message = translator.translate_ui('no_image', lang_code)
-            # Raise a Gradio error to display a popup to the user
             raise gr.Error(error_message)
         
-        # Get the language code from the selected name
-        lang_code = lang_name_to_code.get(lang_name, 'en')
-        
-        # Get model predictions
-        result = model.predict(image)
-        
-        # Translate the disease name using the translator
-        translated_disease = translator.translate_disease(result['disease_key'], lang_code)
-        
-        return translated_disease, f"{result['confidence']:.2%}", result['heatmap']
+        try:
+            # Get model predictions
+            result = model.predict(image)
+            disease_key = result['disease_key']
+            
+            # Get advisory information
+            advisory_html = advisory_service.generate_advisory(disease_key, lang_code)
+            
+            # Translate the disease name using the translator
+            translated_disease = translator.translate_disease(disease_key, lang_code)
+            
+            return (
+                translated_disease, 
+                f"{result['confidence']:.2%}", 
+                result['heatmap'],
+                advisory_html
+            )
+            
+        except Exception as e:
+            error_msg = translator.translate_ui('prediction_error', lang_code)
+            raise gr.Error(f"{error_msg}: {str(e)}")
 
     def update_ui_language(lang_name: str) -> dict:
         """
@@ -106,34 +135,62 @@ def create_ui():
     # --- Gradio Interface Definition ---
     with gr.Blocks(theme=gr.themes.Soft()) as demo:
         # App Title
-        app_title = gr.Markdown(f"# {translator.translate_ui('app_title', 'en')}")
+        app_title = gr.Markdown(f"# {translator.translate_ui('app_title', DEFAULT_LANG_CODE)}")
         
         with gr.Row():
             with gr.Column(scale=1):
                 # Language Selector
                 language_dropdown = gr.Dropdown(
                     choices=list(available_langs.values()),
-                    value='English',
-                    label="Language"
+                    value=DEFAULT_LANG,
+                    label=translator.translate_ui('language', DEFAULT_LANG_CODE)
                 )
                 
                 # Image Input
                 image_input = gr.Image(
                     type="pil",
-                    label=translator.translate_ui('upload_image', 'en'),
-                    height=300
+                    label=translator.translate_ui('upload_image', DEFAULT_LANG_CODE),
+                    height=300,
+                    sources=["upload", "webcam"],
+                    interactive=True
                 )
                 
                 with gr.Row():
                     # Action Buttons
-                    predict_btn = gr.Button(translator.translate_ui('predict', 'en'), variant="primary")
-                    clear_btn = gr.Button(translator.translate_ui('clear', 'en'))
+                    predict_btn = gr.Button(
+                        translator.translate_ui('predict', DEFAULT_LANG_CODE),
+                        variant="primary",
+                        interactive=True
+                    )
+                    clear_btn = gr.Button(
+                        translator.translate_ui('clear', DEFAULT_LANG_CODE),
+                        interactive=True
+                    )
             
             with gr.Column(scale=1):
                 # Output Components
-                disease_label = gr.Label(label=translator.translate_ui('prediction', 'en'))
-                confidence_label = gr.Label(label=translator.translate_ui('confidence', 'en'))
-                heatmap_label = gr.Image(label=translator.translate_ui('heatmap', 'en'), height=300)
+                with gr.Tabs() as output_tabs:
+                    with gr.Tab(translator.translate_ui('prediction_tab', DEFAULT_LANG_CODE)):
+                        disease_label = gr.Label(
+                            label=translator.translate_ui('prediction', DEFAULT_LANG_CODE),
+                            show_label=True
+                        )
+                        confidence_label = gr.Label(
+                            label=translator.translate_ui('confidence', DEFAULT_LANG_CODE),
+                            show_label=True
+                        )
+                        heatmap_label = gr.Image(
+                            label=translator.translate_ui('heatmap', DEFAULT_LANG_CODE),
+                            height=300,
+                            show_label=True
+                        )
+                    
+                    with gr.Tab(translator.translate_ui('advisory_tab', DEFAULT_LANG_CODE)):
+                        advisory_html = gr.HTML(
+                            value="<div style='padding: 20px;'>"
+                                  f"<p>{translator.translate_ui('upload_image_for_advice', DEFAULT_LANG_CODE)}</p>"
+                                  "</div>"
+                        )
 
         # --- Event Listeners ---
         
@@ -141,7 +198,7 @@ def create_ui():
         predict_btn.click(
             fn=get_predictions,
             inputs=[image_input, language_dropdown],
-            outputs=[disease_label, confidence_label, heatmap_label]
+            outputs=[disease_label, confidence_label, heatmap_label, advisory_html]
         )
         
         # 2. When the Clear button is clicked
