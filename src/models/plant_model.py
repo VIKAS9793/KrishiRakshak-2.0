@@ -151,26 +151,51 @@ class PlantDiseaseModel(pl.LightningModule):
     def configure_optimizers(self):
         """Configure optimizer and learning rate scheduler."""
         try:
+            # Configure optimizer
             optimizer = AdamW(
                 self.parameters(),
-                lr=self.hparams.learning_rate,
-                weight_decay=self.hparams.weight_decay
+                lr=self.hparams.LEARNING_RATE,
+                weight_decay=self.hparams.WEIGHT_DECAY,
+                betas=self.hparams.BETAS,
+                eps=self.hparams.EPS
             )
             
-            scheduler = CosineAnnealingLR(
-                optimizer,
-                T_max=self.hparams.epochs,
-                eta_min=1e-6
-            )
+            # Configure scheduler
+            if self.hparams.SCHEDULER.lower() == 'cosine':
+                scheduler = CosineAnnealingLR(
+                    optimizer,
+                    T_max=self.hparams.NUM_EPOCHS,
+                    eta_min=self.hparams.MIN_LR
+                )
+            elif self.hparams.SCHEDULER.lower() == 'reduce_on_plateau':
+                scheduler = ReduceLROnPlateau(
+                    optimizer,
+                    mode='min',
+                    factor=self.hparams.LR_FACTOR,
+                    patience=self.hparams.LR_PATIENCE,
+                    min_lr=self.hparams.MIN_LR,
+                    verbose=True
+                )
+            else:
+                raise ValueError(f"Unsupported scheduler: {self.hparams.SCHEDULER}")
+            
+            scheduler_config = {
+                'scheduler': scheduler,
+                'interval': 'epoch',
+                'frequency': 1,
+                'monitor': 'val_loss',
+                'strict': True,
+                'name': 'learning_rate'
+            }
+            
+            # Add reduce_on_plateau specific config
+            if self.hparams.SCHEDULER.lower() == 'reduce_on_plateau':
+                scheduler_config['reduce_on_plateau'] = True
             
             return {
                 'optimizer': optimizer,
-                'lr_scheduler': {
-                    'scheduler': scheduler,
-                    'monitor': 'val_loss',
-                    'interval': 'epoch',
-                    'frequency': 1
-                }
+                'lr_scheduler': scheduler_config,
+                'monitor': 'val_loss'
             }
         except Exception as e:
             logging.error(f"Optimizer configuration error: {str(e)}")
