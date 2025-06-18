@@ -94,71 +94,58 @@ KrishiRakshak/
 This diagram illustrates the end-to-end flow of the KrishiRakshak web application, from user interaction to result visualization.
 
 ```mermaid
-flowchart TD
+graph TD
     %% User Interaction
-    A[User] -->|1. Uploads Image| B[Gradio Web Interface]
-    A -->|2. Selects Language| B
+    User[User] -->|Uploads Image| Gradio[Gradio Web Interface]
+    User -->|Selects Language| Gradio
     
-    %% Frontend Processing
-    B -->|3. Preprocess Image| C[Image Preprocessing]
-    C -->|4. Resize & Normalize| D[PyTorch/ONNX Model]
+    %% Processing Flow
+    Gradio -->|Preprocess| Preprocessing[Image Preprocessing]
+    Preprocessing -->|Resize & Normalize| Model[PyTorch/ONNX Model]
+    Model -->|Run Inference| Predictions[Get Predictions]
+    Predictions -->|Generate| GradCAM[Grad-CAM Heatmap]
+    GradCAM -->|Create| Results[Results Generation]
     
-    %% Backend Processing
-    D -->|5. Run Inference| E[Get Predictions]
-    E -->|6. Generate Heatmap| F[Grad-CAM Visualization]
-    F -->|7. Create Overlay| G[Results Generation]
+    Results -->|Show| Display[Display Results]
+    Display -->|View| Prediction[Prediction & Confidence]
+    Display -->|View| Heatmap[Heatmap Visualization]
+    Display -->|View| Overlay[Overlay Image]
     
-    %% Display Results
-    G -->|8. Show Output| H[Display Results]
-    H -->|9. User Views| I[Prediction & Confidence]
-    H -->|10. User Views| J[Heatmap Visualization]
-    H -->|11. User Views| K[Overlay Image]
+    Preprocessing -->|Error| Error[Display Error]
+    Model -->|Error| Error
+    Predictions -->|Error| Error
+    GradCAM -->|Error| Error
     
-    %% Error Handling
-    C -->|Error| L[Display Error]
-    D -->|Error| L
-    E -->|Error| L
-    F -->|Error| L
-    
-    %% Subgraphs for better organization
-    subgraph Frontend["🌐 Frontend (Gradio)"]
-        B
-        H
+    subgraph Frontend[Frontend - Gradio]
+        Gradio
+        Display
     end
     
-    subgraph Backend["⚙️ Backend (Python)"]
-        C
-        D
-        E
-        F
-        G
+    subgraph Backend[Backend - Python]
+        Preprocessing
+        Model
+        Predictions
+        GradCAM
+        Results
     end
     
-    subgraph User["👤 User Experience"]
-        A
-        I
-        J
-        K
-        L
+    subgraph UserExp[User Experience]
+        User
+        Prediction
+        Heatmap
+        Overlay
+        Error
     end
     
-    %% Styling
-    classDef user fill:#4CAF50,stroke:#388E3C,color:white,stroke-width:2px
-    classDef frontend fill:#2196F3,stroke:#1976D2,color:white,stroke-width:2px
-    classDef backend fill:#9C27B0,stroke:#7B1FA2,color:white,stroke-width:2px
-    classDef process fill:#FF9800,stroke:#F57C00,color:black,stroke-width:2px
-    classDef error fill:#F44336,stroke:#D32F2F,color:white,stroke-width:2px
+    classDef user fill:#4CAF50,stroke:#388E3C,color:white
+    classDef frontend fill:#2196F3,stroke:#1976D2,color:white
+    classDef backend fill:#9C27B0,stroke:#7B1FA2,color:white
+    classDef error fill:#F44336,stroke:#D32F2F,color:white
     
-    %% Apply styles
-    class A,I,J,K user
-    class B,H frontend
-    class C,D,E,F,G backend
-    class L error
-    
-    %% Add some visual separation
-    style Frontend fill:#e3f2fd,stroke:#bbdefb,stroke-width:2px,color:#0d47a1
-    style Backend fill:#f3e5f5,stroke:#e1bee7,stroke-width:2px,color:#4a148c
-    style User fill:#e8f5e9,stroke:#c8e6c9,stroke-width:2px,color:#1b5e20
+    class User,Prediction,Heatmap,Overlay user
+    class Gradio,Display frontend
+    class Preprocessing,Model,Predictions,GradCAM,Results backend
+    class Error error
 ```
 
 **Flow Explanation:**
@@ -245,27 +232,47 @@ graph TD
 
 ```mermaid
 graph TD
-    A[Input 224x224] --> B[Conv2D]
-    B --> C[MobileNetV3 Base]
-    C --> D[Custom Head]
-    D --> E[Output 38 classes]
+    %% Input Layer
+    Input[Input Image
+    224x224x3] --> Conv[Initial Conv
+    112x112x16]
     
-    C --> F[Depthwise Conv]
-    F --> G[Squeeze-Excitation]
-    G --> H[Hard-Swish]
+    %% MobileNetV3 Blocks
+    subgraph MobileNetV3[MobileNetV3 Large]
+        Conv --> B1[Bottleneck 1
+        112x112x16]
+        B1 --> B2[Bottleneck 2
+        56x56x24]
+        B2 --> B3[Bottleneck 3
+        28x28x40]
+        B3 --> B4[Bottleneck 4
+        14x14x80]
+        B4 --> B5[Bottleneck 5
+        14x14x112]
+        B5 --> B6[Bottleneck 6
+        14x14x160]
+        B6 --> B7[Bottleneck 7
+        7x7x160]
+        B7 --> FinalConv[Final Conv
+        7x7x960]
+    end
     
-    D --> I[1024 Units]
-    I --> J[512 Units]
-    J --> K[38 Units]
-
-    style A fill:#2563eb,stroke:#1e40af,stroke-width:3px,color:#ffffff
-    style B fill:#dc2626,stroke:#b91c1c,stroke-width:3px,color:#ffffff
-    style C fill:#7c3aed,stroke:#6d28d9,stroke-width:3px,color:#ffffff
-    style D fill:#ea580c,stroke:#c2410c,stroke-width:3px,color:#ffffff
-    style E fill:#0891b2,stroke:#0e7490,stroke-width:3px,color:#ffffff
-    style F fill:#8b5cf6,stroke:#7c3aed,stroke-width:3px,color:#ffffff
-    style G fill:#a855f7,stroke:#9333ea,stroke-width:3px,color:#ffffff
-    style H fill:#c084fc,stroke:#a855f7,stroke-width:3px,color:#ffffff
+    %% Classifier Head
+    subgraph Head[Classifier Head]
+        FinalConv --> GAP[Global Avg Pool]
+        GAP --> Dense1[Dense 1280]
+        Dense1 --> Dropout[Dropout 0.2]
+        Dropout --> Output[Output 38]
+    end
+    
+    %% Styling
+    classDef input fill:#4CAF50,stroke:#388E3C,color:white
+    classDef layer fill:#2196F3,stroke:#1976D2,color:white
+    classDef head fill:#FF9800,stroke:#F57C00,color:black
+    
+    class Input input
+    class Conv,B1,B2,B3,B4,B5,B6,B7,FinalConv layer
+    class GAP,Dense1,Dropout,Output head
 ```
 
 #### 2.2 Model Specifications
