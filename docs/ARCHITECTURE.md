@@ -19,45 +19,45 @@ KrishiSahayak is built on a modern AI/ML stack, combining deep learning, compute
 ```
 KrishiSahayak/
 ├── src/
-│   ├── web/                 # Web interface (Gradio)
-│   │   ├── app.py          # Main web application
-│   │   └── components/      # UI components
-│   │
-│   ├── models/             # Deep learning models
-│   │   ├── plant_model.py   # PyTorch Lightning model
-│   │   └── model_utils.py   # Model utilities
-│   │
-│   ├── data/               # Data processing
-│   │   ├── dataloader.py    # Data loading and augmentation
-│   │   └── preprocessing.py # Image preprocessing
-│   │
-│   └── utils/              # Utility functions
-│       ├── gradcam.py       # Grad-CAM implementation
-│       ├── translations.py  # Multilingual support
-│       └── visualization.py # Visualization utilities
+│   ├── web/                 # Web application backend (Flask/FastAPI/Gradio)
+│   │   └── app.py           # Main web application
+│   ├── models/              # Model definitions (plant_model.py, etc.)
+│   ├── utils/               # Utility modules (advisory.py, gradcam.py, translations.py, etc.)
+│   ├── config.py            # Centralized configuration for training/augmentation
+│   └── train.py             # Main training script
 │
-├── configs/                # Configuration files
-│   └── default.yaml        # Model and training configs
+├── configs/
+│   ├── default.yaml         # Main configuration file
+│   └── data/
+│       └── merge_config.json (if needed)
 │
-├── data/                   # Dataset storage
-│   ├── raw/                # Raw image data
-│   └── processed/          # Processed datasets
+├── data/
+│   ├── raw/                 # Original, untouched datasets
+│   └── final/
+│       └── plant_disease_balanced/  # Cleaned, merged, balanced dataset
 │
-├── models/                 # Trained models
-│   ├── checkpoints/        # Training checkpoints
-│   └── exported/           # Exported models (.pth, .onnx)
+├── models/
+│   ├── teacher/             # Teacher model checkpoints (EfficientNetV2, etc.)
+│   └── student/             # Student/distilled model checkpoints (MobileNetV3, etc.)
 │
-├── notebooks/              # Jupyter notebooks
-│   ├── EDA.ipynb           # Exploratory data analysis
-│   └── model_training.ipynb # Training experiments
+├── scripts/
+│   ├── data/                # Data processing, cleaning, merging, distillation scripts
+│   └── export/              # Model export scripts (TFLite, ONNX, etc.)
 │
-├── scripts/               # Utility scripts
-│   ├── train.py            # Training script
-│   └── export_model.py     # Model export script
+├── docs/                    # Documentation
+│   ├── ARCHITECTURE.md
+│   ├── QUICKSTART.md
+│   ├── journey.md
+│   └── RENAME_JUSTIFICATION.md
 │
-└── tests/                 # Test suite
-    ├── test_model.py       # Model tests
-    └── test_utils.py       # Utility tests
+├── reports/                 # For future data validation, model evaluation, or experiment reports (currently empty)
+│
+├── assets/                  # Static assets (banners, images, etc.)
+│
+├── requirements.txt         # Python dependencies
+├── LICENSE                  # License file
+├── README.md                # Project overview
+└── .venv/                   # Python virtual environment (if present)
 ```
 
 ### 1.3 AI/ML Pipeline

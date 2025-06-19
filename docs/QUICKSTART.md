@@ -1,4 +1,4 @@
-# KrishiSahayak – AI-Powered Crop Health Guardian
+# KrishiSahayak – AI-Powered Crop Health Assistant
 
 > **स्वस्थ फसल, समृद्ध किसान** | **Healthy Crops, Prosperous Farmers**
 
@@ -141,11 +141,38 @@ KrishiSahayak leverages state-of-the-art **Deep Learning** and **Computer Vision
 
 ## Dataset Setup
 
-### Source
-The project uses the PlantVillage dataset available on Kaggle:
-- **Source**: https://www.kaggle.com/datasets/abdallahalidev/plantvillage-dataset
-- **License**: Creative Commons Attribution 4.0 International (CC BY 4.0)
-- **Citation**: A. Prabhu, A. Singh, M. Singh, and A. Singh, "PlantVillage Dataset - Leaf Images with Disease Information", figshare, 2020. [Online]. Available: https://doi.org/10.6084/m9.figshare.15124244.v1
+### Data Sources & Rationale
+
+KrishiSahayak uses two primary, open-access datasets for robust and generalizable plant disease detection:
+
+- **PlantVillage** ([Kaggle](https://www.kaggle.com/datasets/abdallahalidev/plantvillage-dataset), [figshare](https://doi.org/10.6084/m9.figshare.15124244.v1))
+  - The largest, most widely used open-source plant disease image dataset, covering 38+ classes across multiple crops and disease types.
+  - License: Creative Commons Attribution 4.0 International (CC BY 4.0)
+  - Citation: A. Prabhu, A. Singh, M. Singh, and A. Singh, "PlantVillage Dataset - Leaf Images with Disease Information", figshare, 2020.
+
+- **PlantDoc** ([GitHub](https://github.com/pratikkayal/PlantDoc-Dataset), [Paper](https://arxiv.org/abs/2001.05954))
+  - A real-world, in-field plant disease dataset with challenging backgrounds, lighting, and occlusions, complementing PlantVillage's clean images.
+  - License: CC BY-NC-SA 4.0
+  - Citation: Kayal, P., Chakraborty, S., & Das, K. (2020). PlantDoc: A Dataset for Visual Plant Disease Detection. arXiv:2001.05954.
+
+**Why only these datasets?**
+- They offer the best combination of diversity, real-world coverage, open licensing, and benchmarking value for plant disease detection.
+- PlantVillage provides balanced, clean data for robust training; PlantDoc introduces real-world variability for generalization.
+- Both are widely used in research, enabling comparability and reproducibility.
+- The pipeline is extensible for future datasets, but these two provide the strongest foundation for practical, ethical, and legal deployment.
+
+### Download Instructions
+
+- **PlantVillage:**
+  ```bash
+  kaggle datasets download -d abdallahalidev/plantvillage-dataset
+  unzip plantvillage-dataset.zip -d data/raw/plantvillage/
+  ```
+- **PlantDoc:**
+  ```bash
+  git clone https://github.com/pratikkayal/PlantDoc-Dataset.git data/raw/PlantDoc/
+  # Or download from the [PlantDoc GitHub Releases](https://github.com/pratikkayal/PlantDoc-Dataset/releases)
+  ```
 
 ### Dataset Structure
 The dataset contains 54,306 images of plant leaves with 38 different classes:
@@ -374,3 +401,33 @@ python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"
 - **Missing dependencies**: Run `pip install -r requirements.txt` to ensure all dependencies are installed.
 
 For additional help, please refer to the [documentation](../docs/) or open an issue in the repository.
+
+### Project Directory Structure
+
+```
+KrishiSahayak/
+├── data/
+│   ├── raw/                 # Original datasets (PlantVillage, PlantDoc, etc.)
+│   └── final/
+│       └── plant_disease_balanced/  # Cleaned, merged, balanced dataset
+├── models/
+│   ├── teacher/             # Teacher model checkpoints
+│   └── student/             # Student/distilled model checkpoints
+├── scripts/
+│   ├── data/                # Data processing, cleaning, merging, distillation scripts
+│   └── export/              # Model export scripts (TFLite, ONNX, etc.)
+├── src/
+│   ├── config.py            # Centralized configuration for training/augmentation
+│   ├── models/              # Model definitions (plant_model.py, etc.)
+│   ├── train.py             # Main training script
+│   ├── utils/               # Utility modules (advisory.py, gradcam.py, translations.py, etc.)
+│   └── web/
+│       └── app.py           # Web application backend
+├── docs/                    # Documentation
+├── reports/                 # For future reports (currently empty)
+├── assets/                  # Static assets (banners, images, etc.)
+├── requirements.txt         # Python dependencies
+├── LICENSE                  # License file
+├── README.md                # Project overview
+└── .venv/                   # Python virtual environment (if present)
+```

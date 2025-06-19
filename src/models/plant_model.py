@@ -17,13 +17,25 @@ from torchvision import models
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
+"""
+PlantDiseaseModel: Student Model for Efficient Inference
+
+This module defines the student model (MobileNetV3 Large) used for real-time inference and deployment in KrishiSahayak.
+
+- The student model is trained via knowledge distillation from a high-accuracy teacher model (EfficientNetV2).
+- MobileNetV3 Large is chosen for its excellent trade-off between accuracy, speed, and resource efficiency, making it ideal for deployment on web, mobile, and edge devices.
+- The teacher model (EfficientNetV2) is used for initial training and distillation, but is not deployed directly due to its higher computational requirements.
+- This approach ensures robust, generalizable performance in real-world, resource-constrained environments.
+"""
+
 class PlantDiseaseModel(pl.LightningModule):
     """
-    A robust PyTorch Lightning model for plant disease classification.
+    Student Model: MobileNetV3 Large for Efficient Inference
 
-    This model uses a pre-trained MobileNetV3 Large backbone with a custom
-    classifier head. It is designed for efficient training and includes
-    comprehensive, appropriate metrics for classification tasks.
+    - This model is used as the student in a knowledge distillation setup, where it learns from a teacher model (EfficientNetV2).
+    - MobileNetV3 Large is selected for deployment due to its lightweight architecture, fast inference, and strong accuracy on plant disease classification tasks.
+    - The teacher model provides soft targets and guidance during training, enabling the student to approach teacher-level accuracy while remaining efficient enough for real-time use on web/mobile/edge devices.
+    - This design enables KrishiSahayak to deliver high-quality predictions in the field, even on low-resource hardware.
     """
 
     def __init__(

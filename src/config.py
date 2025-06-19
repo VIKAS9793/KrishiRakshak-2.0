@@ -538,6 +538,35 @@ class Config:
                 warnings.warn(f"Ignoring unknown config key: {key}", UserWarning)
     
     @classmethod
+    def update_from_json_config(cls, json_path: Union[str, Path]) -> None:
+        """
+        Update dataset paths and NUM_CLASSES from a JSON config file (e.g., for merged datasets).
+        Args:
+            json_path: Path to the JSON config file
+        Usage:
+            Config.update_from_json_config('config.json')
+        """
+        import json
+        json_path = Path(json_path)
+        if not json_path.exists():
+            raise FileNotFoundError(f"JSON config file not found: {json_path}")
+        with open(json_path, 'r') as f:
+            config = json.load(f)
+        # Update data directories
+        merged_dir = config.get('output', {}).get('merged_dir', None)
+        if merged_dir:
+            cls.DATA_DIR = Path(merged_dir)
+            cls.PROCESSED_DATA_DIR = cls.DATA_DIR / 'processed'
+            cls.FIXED_DATA_DIR = cls.DATA_DIR / 'fixed'
+            print(f"[Config] DATA_DIR set to: {cls.DATA_DIR}")
+        # Update NUM_CLASSES from class_mapping
+        class_mapping = config.get('class_mapping', {})
+        if class_mapping:
+            num_classes = len(class_mapping)
+            cls.NUM_CLASSES = num_classes
+            print(f"[Config] NUM_CLASSES set to: {cls.NUM_CLASSES}")
+    
+    @classmethod
     def setup_training(
         cls, 
         model: nn.Module, 

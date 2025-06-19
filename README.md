@@ -1,4 +1,4 @@
-# KrishiSahayak – AI-Powered Crop Health Guardian
+# KrishiSahayak – AI-Powered Crop Health Assistant
 स्वस्थ फसल, समृद्ध किसान | Healthy Crops, Prosperous Farmers
 
 <p align="center">
@@ -117,6 +117,26 @@ To empower rural farmers with accurate, accessible, and explainable AI-powered c
 - Support multiple languages for better accessibility
 - Generate actionable recommendations
 
+## Data Sources & Rationale
+
+KrishiSahayak uses two primary, open-access datasets for robust and generalizable plant disease detection:
+
+- **PlantVillage** ([Kaggle](https://www.kaggle.com/datasets/abdallahalidev/plantvillage-dataset), [figshare](https://doi.org/10.6084/m9.figshare.15124244.v1))
+  - The largest, most widely used open-source plant disease image dataset, covering 38+ classes across multiple crops and disease types.
+  - License: Creative Commons Attribution 4.0 International (CC BY 4.0)
+  - Citation: A. Prabhu, A. Singh, M. Singh, and A. Singh, "PlantVillage Dataset - Leaf Images with Disease Information", figshare, 2020.
+
+- **PlantDoc** ([GitHub](https://github.com/pratikkayal/PlantDoc-Dataset), [Paper](https://arxiv.org/abs/2001.05954))
+  - A real-world, in-field plant disease dataset with challenging backgrounds, lighting, and occlusions, complementing PlantVillage's clean images.
+  - License: CC BY-NC-SA 4.0
+  - Citation: Kayal, P., Chakraborty, S., & Das, K. (2020). PlantDoc: A Dataset for Visual Plant Disease Detection. arXiv:2001.05954.
+
+**Why only these datasets?**
+- They offer the best combination of diversity, real-world coverage, open licensing, and benchmarking value for plant disease detection.
+- PlantVillage provides balanced, clean data for robust training; PlantDoc introduces real-world variability for generalization.
+- Both are widely used in research, enabling comparability and reproducibility.
+- The pipeline is extensible for future datasets, but these two provide the strongest foundation for practical, ethical, and legal deployment.
+
 ## Documentation
 
 For detailed technical documentation, please refer to:
@@ -148,24 +168,49 @@ KrishiSahayak leverages a modern deep learning stack for efficient plant disease
 
 ```
 KrishiSahayak/
+├── README.md                # Project overview, usage, and instructions (should remain top-level)
+├── LICENSE                  # License file (top-level standard)
+├── requirements.txt         # Python dependencies
+├── app.py                   # (Legacy or entry-point script, if still needed)
+├── code_reviewer.py         # (Utility or legacy script, if still needed)
+│
+├── assets/                  # Static assets (e.g., banners, images for UI)
+│
+├── configs/
+│   ├── default.yaml         # Main configuration file
+│   └── data/
+│       └── merge_config.json (if needed for future merges)
+│
 ├── data/
-│   ├── processed_data/    # Processed CSVs
-│   └── plantvillage/      # Raw images
-├── models/                 # Saved model checkpoints
-├── logs/                   # Training logs
-├── reports/                # Data reports and visualizations
-├── src/
-│   ├── config.py         # Configuration
-│   ├── data/              # Data loading
-│   │   └── datamodule.py
-│   ├── models/            # Model architecture
-│   │   └── plant_model.py
-│   └── train.py           # Training script
+│   ├── raw/                 # Original, untouched datasets (PlantVillage, PlantDoc, etc.)
+│   └── final/
+│       └── plant_disease_balanced/  # Cleaned, merged, balanced dataset for training/validation/testing
+│
+├── docs/
+│   ├── ARCHITECTURE.md      # System and code architecture
+│   ├── QUICKSTART.md        # Quickstart guide for new users/contributors
+│   ├── journey.md           # Project journey, decisions, and rationale
+│   └── RENAME_JUSTIFICATION.md # Documentation on file/class renaming
+│
+├── models/
+│   ├── teacher/             # Teacher model checkpoints (e.g., EfficientNetV2)
+│   └── student/             # Student/distilled model checkpoints (e.g., MobileNetV3)
+│
+├── reports/                 # For future data validation, model evaluation, or experiment reports (currently empty)
+│
 ├── scripts/
-│   ├── fix_dataset.py   # Data fixing utilities
-│   └── sanity_check.py    # Data validation
-├── requirements.txt
-└── README.md
+│   ├── data/                # Data processing, cleaning, merging, and distillation scripts
+│   └── export/              # Scripts for exporting models (e.g., to TFLite, ONNX)
+│
+├── src/
+│   ├── config.py            # Centralized configuration for training/augmentation
+│   ├── models/              # Model definitions (plant_model.py, etc.)
+│   ├── train.py             # Main training script
+│   ├── utils/               # Utility modules (advisory, gradcam, translations, etc.)
+│   └── web/
+│       └── app.py           # Web application backend (Flask/FastAPI/etc.)
+│
+└── .venv/                   # (If present) Python virtual environment (should be in .gitignore)
 ```
 
 ## Getting Started
@@ -274,3 +319,18 @@ Monitor training progress using TensorBoard. Key metrics include:
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Model Roles: Teacher vs. Student
+
+- **Teacher Model (EfficientNetV2):**
+  - Used for high-accuracy training and as the source of knowledge in the distillation process.
+  - Stored in `models/teacher/`.
+  - Not intended for direct deployment on resource-constrained devices due to its size and computational requirements.
+
+- **Student Model (MobileNetV3 Large):**
+  - Lightweight, efficient model distilled from the teacher.
+  - Used for real-time inference on web, mobile, and edge devices.
+  - Stored in `models/student/`.
+  - Optimized for speed and low resource usage while maintaining high accuracy.
+
+This setup ensures you get the best of both worlds: high-accuracy training and practical, fast deployment.
