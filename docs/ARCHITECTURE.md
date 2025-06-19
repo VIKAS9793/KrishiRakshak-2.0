@@ -87,9 +87,9 @@ KrishiRakshak/
    - Monitor prediction quality
    - Schedule periodic retraining
 
-### 1.2 System Architecture Diagrams
+### 1.4 System Architecture Diagrams
 
-#### 1.2.1 Web Application Flow
+#### 1.4.1 Web Application Flow
 
 This diagram illustrates the end-to-end flow of the KrishiRakshak web application, from user interaction to result visualization.
 
@@ -160,7 +160,8 @@ graph TD
 
 Error handling is implemented at each step to ensure a smooth user experience.
 
-#### 1.2.2 Gradio Interface Flow
+#### 1.4.2 Gradio Interface Flow
+
 ```mermaid
 graph TD
     A[User Uploads Image] --> B[Gradio Interface]
@@ -179,56 +180,74 @@ graph TD
     style G fill:#65a30d,stroke:#4d7c0f,stroke-width:3px,color:#ffffff
 ```
 
-### 1.3 Technical Stack (Offline-First)
+### 1.5 Technical Stack (Offline-First)
 
-#### 1.3.1 Frontend Technologies
-- **Gradio Interface**
-  - **Framework**: Gradio
-  - **Features**:
-    - Image upload
-    - Real-time inference
-    - Results visualization
-    - Local storage
-  - **Benefits**:
-    - Easy deployment
-    - Cross-platform
-    - No internet required
-    - Lightweight
+#### 1.5.1 Frontend Technologies
 
-- **Mobile**:
-  - **Android/iOS**: TFLite
-  - **Features**:
-    - Camera integration
-    - Offline inference
-    - Local storage
-    - Multi-language
-  - **Requirements**:
-    - Android 5.0+
-    - iOS 13.0+
+**Gradio Interface**
+- **Framework**: Gradio
+- **Features**:
+  - Image upload
+  - Real-time inference
+  - Results visualization
+  - Local storage
+- **Benefits**:
+  - Easy deployment
+  - Cross-platform
+  - No internet required
+  - Lightweight
 
-#### 1.3.2 Backend Components
-- **Local Server**
-  - **Framework**: Python Flask
-  - **Features**:
-    - Model serving
-    - Image processing
-    - Result generation
-    - Local database
-  - **Performance**:
-    - Lightweight
-    - Fast response
-    - Low memory
-    - No internet
+**Mobile**
+- **Android/iOS**: TFLite
+- **Features**:
+  - Camera integration
+  - Offline inference
+  - Local storage
+  - Multi-language
+- **Requirements**:
+  - Android 5.0+
+  - iOS 13.0+
 
-- **ML Framework**
-  - **Core**: PyTorch 2.0+
-  - **Mobile**: TFLite 2.10+
-  - **Web**: TensorFlow.js 4.0+
-  - **Optimization**: INT8 quantization
+#### 1.5.2 Backend Components
 
-### 2. Model Architecture
+**Local Server**
+- **Framework**: Python Flask
+- **Features**:
+  - Model serving
+  - Image processing
+  - Result generation
+  - Local database
+- **Performance**:
+  - Lightweight
+  - Fast response
+  - Low memory
+  - No internet
 
-#### 2.1 Base Model (MobileNetV3-Large)
+**ML Framework**
+- **Core**: PyTorch 2.0+
+- **Mobile**: TFLite 2.10+
+- **Web**: TensorFlow.js 4.0+
+- **Optimization**: INT8 quantization
+
+#### 1.5.3 Storage Solutions
+
+**Local Storage**
+- **Database**: SQLite
+- **Cache**: IndexedDB
+- **Features**:
+  - Offline-first
+  - Local persistence
+  - Data backup
+  - History tracking
+- **Requirements**:
+  - Minimal space
+  - Fast access
+  - Secure storage
+  - Backup capability
+
+## 2. Model Architecture
+
+### 2.1 Base Model (MobileNetV3-Large)
 
 ```mermaid
 graph TD
@@ -275,7 +294,7 @@ graph TD
     class GAP,Dense1,Dropout,Output head
 ```
 
-#### 2.2 Model Specifications
+### 2.2 Model Specifications
 
 | Component               | Specification                          |
 |-------------------------|---------------------------------------|
@@ -290,7 +309,7 @@ graph TD
 | **Learning Rate**     | 1e-3 (initial)                        |
 | **Batch Size**        | 32                                    |
 
-#### 2.3 Performance Metrics
+### 2.3 Performance Metrics
 
 | Metric                 | CPU (Intel i7)  | GPU (NVIDIA T4)  |
 |-----------------------|----------------|-----------------|
@@ -300,53 +319,32 @@ graph TD
 | **Accuracy**          | 96.2%          | 96.2%           |
 | **F1-Score**         | 95.8%          | 95.8%           |
 
-#### 2.4 Key Features
+### 2.4 Key Features
 
 1. **Efficient Architecture**
    - Depthwise separable convolutions
    - Squeeze-and-Excitation blocks
    - Hard-Swish activation functions
+   - EfficientNet scaling rules
 
 2. **Training Optimizations**
    - Mixed precision training
    - Learning rate scheduling
    - Weight decay regularization
+   - Transfer learning from ImageNet
 
 3. **Deployment Ready**
    - ONNX export support
    - Optimized for edge devices
    - Minimal dependencies
+   - Custom head for disease classification
 
 4. **Explainability**
    - Integrated Grad-CAM
    - Confidence scoring
    - Visual heatmaps
 
-2. **Key Features**
-   - **Efficient Architecture**
-     - Depthwise separable convolutions
-     - Squeeze-and-excitation blocks
-     - Hard-Swish activation
-     - EfficientNet scaling rules
-
-   - **Transfer Learning**
-     - Pre-trained on ImageNet
-     - Fine-tuned on PlantVillage
-     - Custom head for disease classification
-
-3. **Performance Metrics**
-   - **Accuracy**: ~95-97% on PlantVillage
-   - **F1 Score**: ~0.94 (weighted)
-   - **Precision**: ~0.95
-   - **Recall**: ~0.94
-
-4. **Resource Usage**
-   - **CPU**: Optimized for mobile devices
-   - **Memory**: ~100MB RAM during inference
-   - **Storage**: ~1.3MB (quantized)
-   - **Battery**: Low power consumption
-
-#### 2.3 Custom Head Architecture
+### 2.5 Custom Head Architecture
 
 ```mermaid
 graph TD
@@ -370,36 +368,99 @@ graph TD
     style I fill:#65a30d,stroke:#4d7c0f,stroke-width:3px,color:#ffffff
 ```
 
-#### 2.4 Optimization Techniques
+### 2.6 Optimization Techniques
 
-1. **Quantization**
-   - **Type**: INT8 quantization
-   - **Size Reduction**: 4x
-   - **Performance Impact**: ~200ms inference
-   - **Accuracy Drop**: <1%
+#### 2.6.1 Quantization
+- **Type**: INT8 quantization
+- **Size Reduction**: 4x smaller model
+- **Performance Impact**: ~200ms inference
+- **Accuracy Drop**: <1%
 
-2. **Pruning**
-   - **Method**: L1 regularization
-   - **Reduction**: 30% parameters
-   - **Maintained Accuracy**: >95%
+#### 2.6.2 Pruning
+- **Method**: L1 regularization
+- **Reduction**: 30% fewer parameters
+- **Maintained Accuracy**: >95%
 
-3. **Mixed Precision**
-   - **Training**: FP16
-   - **Inference**: INT8
-   - **Memory**: Reduced by 50%
-   - **Speed**: Increased by 2x
+#### 2.6.3 Mixed Precision
+- **Training**: FP16
+- **Inference**: INT8
+- **Memory**: Reduced by 50%
+- **Speed**: Increased by 2x
 
-#### 1.3.4 Storage Solutions
-- **Local Storage**
-  - **Database**: SQLite
-  - **Cache**: IndexedDB
-  - **Features**:
-    - Offline-first
-    - Local persistence
-    - Data backup
-    - History tracking
-  - **Requirements**:
-    - Minimal space
-    - Fast access
-    - Secure storage
-    - Backup capability
+## 3. Resource Usage & Requirements
+
+### 3.1 System Requirements
+
+| Component            | Minimum        | Recommended    |
+|---------------------|---------------|----------------|
+| **CPU**             | Dual-core 2GHz | Quad-core 3GHz |
+| **Memory**          | 4GB RAM       | 8GB RAM        |
+| **Storage**         | 2GB free      | 5GB free       |
+| **OS**              | Windows 10    | Windows 11     |
+| **Python**          | 3.8+          | 3.10+          |
+| **GPU** (Optional)  | CUDA 11.0+    | CUDA 11.8+     |
+
+### 3.2 Performance Characteristics
+
+| Platform            | Inference Time | Memory Usage   | Power Consumption |
+|--------------------|---------------|----------------|------------------|
+| **Desktop CPU**     | ~50ms         | ~100MB         | Low              |
+| **Desktop GPU**     | ~10ms         | ~1.5GB         | Medium           |
+| **Mobile Device**   | ~200ms        | ~150MB         | Very Low         |
+| **Edge Device**     | ~100ms        | ~80MB          | Ultra Low        |
+
+### 3.3 Model Accuracy & Reliability
+
+- **Overall Accuracy**: 95-97% on PlantVillage dataset
+- **F1 Score**: ~0.94 (weighted average)
+- **Precision**: ~0.95 across all classes
+- **Recall**: ~0.94 across all classes
+- **Confidence Threshold**: 0.7 for reliable predictions
+
+## 4. Deployment & Integration
+
+### 4.1 Supported Platforms
+
+- **Web Application**: Cross-platform browser support
+- **Desktop**: Windows, macOS, Linux
+- **Mobile**: Android 5.0+, iOS 13.0+
+- **Edge Devices**: Raspberry Pi 4, NVIDIA Jetson
+
+### 4.2 Integration Points
+
+- **API Endpoints**: RESTful API for external integration
+- **SDK Support**: Python, JavaScript SDKs available
+- **Database**: SQLite for local storage, PostgreSQL for production
+- **Cloud Ready**: Docker containerization support
+
+## 5. Security & Privacy
+
+### 5.1 Data Protection
+
+- **Local Processing**: All inference happens locally
+- **No Data Transmission**: Images never leave the device
+- **Privacy First**: No user data collection
+- **Secure Storage**: Encrypted local database
+
+### 5.2 Model Security
+
+- **Model Validation**: Checksums for model integrity
+- **Version Control**: Semantic versioning for updates
+- **Rollback Support**: Previous model versions retained
+- **Access Control**: Authentication for admin features
+
+## 6. Future Enhancements
+
+### 6.1 Planned Features
+
+- **Real-time Video**: Live disease detection from camera feed
+- **Multi-crop Support**: Expand beyond current plant types
+- **Treatment Recommendations**: AI-powered remedy suggestions
+- **Farmer Dashboard**: Historical tracking and analytics
+
+### 6.2 Technical Improvements
+
+- **Model Compression**: Further reduce model size
+- **Faster Inference**: Optimize for sub-10ms response
+- **Better Accuracy**: Increase to 98%+ with more data
+- **Edge AI**: Specialized hardware acceleration
