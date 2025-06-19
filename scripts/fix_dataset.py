@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
-"""Fix dataset issues for KrishiSahayak.
+"""
+Fix dataset issues for KrishiSahayak.
+
+WARNING: This script is deprecated. Use scripts/preprocess_dataset.py for all modern data preprocessing and cleaning tasks.
+References to data/processed_data and data/fixed_data are obsolete. Use data/plantvillage for all input/output.
 
 1. Updates file paths in CSV to match current directory structure
 2. Handles class imbalance by setting up class weights
 3. Creates a balanced subset if needed
 
 Usage:
-    python scripts/fix_dataset.py --input-dir data/processed_data --output-dir data/fixed_data
+    python scripts/fix_dataset.py --input-dir data/plantvillage --output-dir data/plantvillage
 """
 
 import argparse
@@ -48,11 +52,11 @@ def create_balanced_subset(df: pd.DataFrame, samples_per_class: int = 100) -> pd
     ).reset_index(drop=True)
 
 def main():
-    parser = argparse.ArgumentParser(description="Fix dataset issues for KrishiSahayak")
-    parser.add_argument('--input-dir', type=Path, default='data/processed_data',
-                      help='Directory containing train/val/test CSVs')
-    parser.add_argument('--output-dir', type=Path, default='data/fixed_data',
-                      help='Directory to save fixed CSVs')
+    parser = argparse.ArgumentParser(description="Fix dataset issues for KrishiSahayak (DEPRECATED)")
+    parser.add_argument('--input-dir', type=Path, default='data/plantvillage',
+                      help='Directory containing train/val/test CSVs (default: data/plantvillage)')
+    parser.add_argument('--output-dir', type=Path, default='data/plantvillage',
+                      help='Directory to save fixed CSVs (default: data/plantvillage)')
     args = parser.parse_args()
     
     # Ensure output directory exists
