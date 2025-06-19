@@ -1,5 +1,5 @@
 """
-Translation module for KrishiRakshak.
+Translation module for KrishiSahayak.
 
 This module centralizes all text translations for the application,
 including UI elements and disease names, to support multilingual functionality.
@@ -16,7 +16,7 @@ from typing import Dict, Optional
 UI_TRANSLATIONS: Dict[str, Dict[str, str]] = {
     'en': {
         # App Info
-        'app_title': 'KrishiRakshak - Plant Health Assistant',
+        'app_title': 'KrishiSahayak - Plant Health Assistant',
         'app_description': 'AI-powered plant disease detection and advisory system',
         'language_name': 'English',
         

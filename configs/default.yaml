@@ -1,4 +1,4 @@
-# KrishiRakshak Training Configuration
+# KrishiSahayak Training Configuration
 # This file contains default training parameters that can be overridden via command line
 
 # Model configuration
@@ -40,7 +40,7 @@ EARLY_STOPPING_PATIENCE: 10
 MIN_DELTA: 0.001
 
 # Logging and checkpoints
-EXPERIMENT_NAME: "krishirakshak"
+EXPERIMENT_NAME: "krishisahayak"
 LOG_EVERY_N_STEPS: 10
 CHECKPOINT_SAVE_TOP_K: 3
 MONITOR_METRIC: "val_loss"

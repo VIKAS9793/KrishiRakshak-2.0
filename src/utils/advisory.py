@@ -2,7 +2,7 @@
 """
 Complete Multilingual Agricultural Advisory Script for the Indian Landscape.
 
-Covers all 38 classes from the KrishiRakshak dataset. Provides actionable,
+Covers all 38 classes from the KrishiSahayak dataset. Provides actionable,
 verifiable advice with a focus on low-cost organic and standard chemical
 treatments relevant to Indian farmers.
 

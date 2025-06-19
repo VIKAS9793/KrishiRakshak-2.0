@@ -1,5 +1,5 @@
 """
-Modern ML/DL Configuration for KrishiRakshak
+Modern ML/DL Configuration for KrishiSahayak
 Following 2024-2025 state-of-the-art practices
 """
 import os
@@ -232,7 +232,7 @@ class Config:
             f"TTA: {cls.TTA_NUM_AUGS} augs"
         ]
         
-        print("\n".join(["="*50, "KrishiRakshak Configuration", "="*50] + info + ["="*50]))
+        print("\n".join(["="*50, "KrishiSahayak Configuration", "="*50] + info + ["="*50]))
     
     @classmethod
     def get_optimizer(cls, model: nn.Module) -> Optimizer:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fix dataset issues for KrishiRakshak.
+"""Fix dataset issues for KrishiSahayak.
 
 1. Updates file paths in CSV to match current directory structure
 2. Handles class imbalance by setting up class weights
@@ -48,7 +48,7 @@ def create_balanced_subset(df: pd.DataFrame, samples_per_class: int = 100) -> pd
     ).reset_index(drop=True)
 
 def main():
-    parser = argparse.ArgumentParser(description="Fix dataset issues for KrishiRakshak")
+    parser = argparse.ArgumentParser(description="Fix dataset issues for KrishiSahayak")
     parser.add_argument('--input-dir', type=Path, default='data/processed_data',
                       help='Directory containing train/val/test CSVs')
     parser.add_argument('--output-dir', type=Path, default='data/fixed_data',

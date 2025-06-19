@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Data sanity-check utility for KrishiRakshak datasets.
+"""Data sanity-check utility for KrishiSahayak datasets.
 
 Usage (from project root):
 
@@ -128,7 +128,7 @@ def compare_label_sets(reports: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run sanity checks on KrishiRakshak CSV splits.")
+    parser = argparse.ArgumentParser(description="Run sanity checks on KrishiSahayak CSV splits.")
     parser.add_argument("--csv", type=pathlib.Path, nargs="+", required=True, help="CSV file paths")
     parser.add_argument("--out", type=pathlib.Path, default="reports/data_quality_report.json", help="Output JSON path")
     args = parser.parse_args()

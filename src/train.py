@@ -1,5 +1,5 @@
 """
-Modern Training Script for KrishiRakshak Plant Disease Classification
+Modern Training Script for KrishiSahayak Plant Disease Classification
 Following 2024-2025 best practices
 """
 import argparse
@@ -286,7 +286,7 @@ def train(config: Config, resume_from: Optional[str] = None) -> None:
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="Train KrishiRakshak plant disease classification model",
+        description="Train KrishiSahayak plant disease classification model",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     
@@ -330,7 +330,7 @@ def main() -> None:
         
         # Setup logging
         setup_logging(log_level=getattr(args, 'log_level', 'INFO'))
-        logging.info("Starting KrishiRakshak training")
+        logging.info("Starting KrishiSahayak training")
         
         # Initialize config
         config = Config()

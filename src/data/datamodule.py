@@ -1,4 +1,4 @@
-"""PyTorch Lightning DataModule for KrishiRakshak.
+"""PyTorch Lightning DataModule for KrishiSahayak.
 
 This module handles data loading, preprocessing, and augmentation for the plant disease
 classification task. It supports:

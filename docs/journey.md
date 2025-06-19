@@ -1,4 +1,4 @@
-# 🌱 The Journey Behind KrishiRakshak  
+# 🌱 The Journey Behind KrishiSahayak  
 ### By Vikas Sahani — Botany Graduate | Finance Professional | Purpose-Led Builder
 
 ---
@@ -32,7 +32,7 @@ I asked myself:
 
 ---
 
-## 💡 How KrishiRakshak Was Born
+## 💡 How KrishiSahayak Was Born
 
 I started with what I knew:
 - **Botany** — the life cycle of crops, diseases like early blight
@@ -84,7 +84,7 @@ They came from spending time understanding **what real farmers need to act.**
 
 ## 📍 Where It’s Going
 
-KrishiRakshak is just a starting point.
+KrishiSahayak is just a starting point.
 
 But it’s already:
 - Helping visualize the **cost of disease** in monetary terms
@@ -102,8 +102,8 @@ But thanks to the AI tools available — and my drive to design something real �
 
 If this tool helps even one farmer avoid losing a season, I will consider it a success.
 
-I built KrishiRakshak **not to impress judges**,  
+I built KrishiSahayak **not to impress judges**,  
 but to serve those who don’t get judged at all.
 
 **— Vikas Sahani**  
-Botany Grad | FinServ Professional | Builder of KrishiRakshak
+Botany Grad | FinServ Professional | Builder of KrishiSahayak

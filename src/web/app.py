@@ -1,5 +1,5 @@
 """
-Gradio UI for KrishiRakshak with full multilingual support.
+Gradio UI for KrishiSahayak with full multilingual support.
 
 This script creates a dynamic web interface where all text elements
 (labels, buttons, titles, and results) are translated in real-time

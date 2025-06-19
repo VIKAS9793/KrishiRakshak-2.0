@@ -1,5 +1,5 @@
 """
-KrishiRakshak - Plant Disease Detection with Grad-CAM and Multilingual Support.
+KrishiSahayak - Plant Disease Detection with Grad-CAM and Multilingual Support.
 
 This is the main entry point for the Gradio web interface.
 """
@@ -32,7 +32,7 @@ example_images = (
 
 # Constants
 MODEL_DIR = Path("models")
-MODEL_PATH = MODEL_DIR / "krishirakshak_model.pt"
+MODEL_PATH = MODEL_DIR / "krishisahayak_model.pt"
 EXAMPLE_IMAGES_DIR = Path("examples")
 
 # Initialize device
@@ -157,7 +157,7 @@ def predict(
 
 def create_ui() -> gr.Blocks:
     """
-    Create and configure the Gradio web interface for KrishiRakshak.
+    Create and configure the Gradio web interface for KrishiSahayak.
     
     Returns:
         gr.Blocks: Configured Gradio Blocks interface
@@ -169,9 +169,9 @@ def create_ui() -> gr.Blocks:
         'mr': 'मराठी'
     }
     
-    with gr.Blocks(title="KrishiRakshak - Plant Disease Detection") as demo:
+    with gr.Blocks(title="KrishiSahayak - Plant Disease Detection") as demo:
         # Title and description
-        gr.Markdown("# 🌱 KrishiRakshak - Plant Disease Detection")
+        gr.Markdown("# 🌱 KrishiSahayak - Plant Disease Detection")
         gr.Markdown("Upload an image of a plant leaf to detect diseases.")
         
         with gr.Row():

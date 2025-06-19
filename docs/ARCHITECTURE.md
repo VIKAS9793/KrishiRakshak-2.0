@@ -1,10 +1,10 @@
-# KrishiRakshak Architecture
+# KrishiSahayak Architecture
 
-This document outlines the technical architecture of the KrishiRakshak AI-powered plant disease detection system.
+This document outlines the technical architecture of the KrishiSahayak AI-powered plant disease detection system.
 
 ## 1. System Overview
 
-KrishiRakshak is built on a modern AI/ML stack, combining deep learning, computer vision, and web technologies to provide an accessible plant disease detection solution. The system is designed with scalability, performance, and explainability in mind.
+KrishiSahayak is built on a modern AI/ML stack, combining deep learning, computer vision, and web technologies to provide an accessible plant disease detection solution. The system is designed with scalability, performance, and explainability in mind.
 
 ### 1.1 Core AI/ML Components
 
@@ -17,7 +17,7 @@ KrishiRakshak is built on a modern AI/ML stack, combining deep learning, compute
 ### 1.2 System Architecture
 
 ```
-KrishiRakshak/
+KrishiSahayak/
 ├── src/
 │   ├── web/                 # Web interface (Gradio)
 │   │   ├── app.py          # Main web application
@@ -91,7 +91,7 @@ KrishiRakshak/
 
 #### 1.4.1 Web Application Flow
 
-This diagram illustrates the end-to-end flow of the KrishiRakshak web application, from user interaction to result visualization.
+This diagram illustrates the end-to-end flow of the KrishiSahayak web application, from user interaction to result visualization.
 
 ```mermaid
 graph TD

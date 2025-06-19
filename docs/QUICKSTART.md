@@ -1,14 +1,14 @@
-# KrishiRakshak – AI-Powered Crop Health Guardian
+# KrishiSahayak – AI-Powered Crop Health Guardian
 
 > **स्वस्थ फसल, समृद्ध किसान** | **Healthy Crops, Prosperous Farmers**
 
 ## 🚀 Quick Start Guide
 
-Welcome to KrishiRakshak - an AI-powered plant disease detection system designed for farmers and agricultural professionals. This guide will help you set up and use our deep learning-based solution for accurate and explainable plant disease classification.
+Welcome to KrishiSahayak - an AI-powered plant disease detection system designed for farmers and agricultural professionals. This guide will help you set up and use our deep learning-based solution for accurate and explainable plant disease classification.
 
 ### 🤖 AI/ML Overview
 
-KrishiRakshak leverages state-of-the-art **Deep Learning** and **Computer Vision** techniques to analyze plant leaf images and detect diseases with high accuracy. The system is built using:
+KrishiSahayak leverages state-of-the-art **Deep Learning** and **Computer Vision** techniques to analyze plant leaf images and detect diseases with high accuracy. The system is built using:
 
 - **Core Model**: Fine-tuned MobileNetV3 Large (pre-trained on ImageNet)
 - **Framework**: PyTorch Lightning for scalable training
@@ -81,8 +81,8 @@ KrishiRakshak leverages state-of-the-art **Deep Learning** and **Computer Vision
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/your-username/KrishiRakshak-2.0.git
-   cd KrishiRakshak-2.0
+   git clone https://github.com/VIKAS9793/KrishiSahayak.git
+   cd KrishiSahayak
    ```
 
 2. **Install Dependencies**
@@ -155,7 +155,7 @@ The dataset contains 54,306 images of plant leaves with 38 different classes:
 - Original images are of varying sizes
 
 #### Important Note on Dataset Usage
-This dataset is primarily used for training and demonstrating the functionality of the KrishiRakshak system. For real-world deployment, we recommend:
+This dataset is primarily used for training and demonstrating the functionality of the KrishiSahayak system. For real-world deployment, we recommend:
 
 1. **Field Data Collection**
    - Collect additional images from actual agricultural fields
@@ -332,8 +332,8 @@ For production deployment, we recommend creating a custom dataset that:
 
 ```bash
 # Create and activate conda environment
-conda create -n krishirakshak python=3.10
-conda activate krishirakshak
+conda create -n krishisahayak python=3.10
+conda activate krishisahayak
 
 # Install PyTorch with CUDA
 conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia

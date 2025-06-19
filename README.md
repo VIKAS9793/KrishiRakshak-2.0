@@ -1,15 +1,13 @@
-# KrishiRakshak – AI-Powered Crop Health Guardian
+# KrishiSahayak – AI-Powered Crop Health Guardian
 स्वस्थ फसल, समृद्ध किसान | Healthy Crops, Prosperous Farmers
 
 <p align="center">
-  <img src="assets/banners/banner.png?raw=true" alt="KrishiRakshak Banner" width="800">
-  <br>
-  <img src="assets/logos/logo.png?raw=true" alt="KrishiRakshak Logo" width="200">
+  <img src="banner.png" alt="KrishiSahayak Banner" width="800">
 </p>
 
 ## 🤖 About the Project
 
-KrishiRakshak is an **AI-powered plant disease detection system** that leverages **Deep Learning** and **Computer Vision** to help farmers identify crop diseases early and accurately. Built with **PyTorch** and **Gradio**, it provides an intuitive interface for real-time disease classification with explainable AI visualizations.
+KrishiSahayak is an **AI-powered plant disease detection system** that leverages **Deep Learning** and **Computer Vision** to help farmers identify crop diseases early and accurately. Built with **PyTorch** and **Gradio**, it provides an intuitive interface for real-time disease classification with explainable AI visualizations.
 
 ### Core AI/ML Technologies
 
@@ -34,8 +32,8 @@ KrishiRakshak is an **AI-powered plant disease detection system** that leverages
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/VIKAS9793/KrishiRakshak-2.0.git
-   cd KrishiRakshak-2.0
+   git clone https://github.com/VIKAS9793/KrishiSahayak.git
+   cd KrishiSahayak
    ```
 
 ## Project Overview
@@ -79,7 +77,7 @@ KrishiRakshak is a comprehensive AI solution that combines real-time plant disea
 ---
 
 ### 📖 Read Our Journey
-Curious about the story and purpose behind KrishiRakshak? [Read the journey behind KrishiRakshak](docs/journey.md) to learn how and why this project was built, directly from the creator.
+Curious about the story and purpose behind KrishiSahayak? [Read the journey behind KrishiSahayak](docs/journey.md) to learn how and why this project was built, directly from the creator.
 
 ---
 
@@ -127,7 +125,7 @@ For detailed technical documentation, please refer to:
 
 ## Technical Architecture
 
-KrishiRakshak leverages a modern deep learning stack for efficient plant disease classification:
+KrishiSahayak leverages a modern deep learning stack for efficient plant disease classification:
 
 ### Model Architecture
 - **Backbone**: MobileNetV3-Large (pretrained on ImageNet)
@@ -149,7 +147,7 @@ KrishiRakshak leverages a modern deep learning stack for efficient plant disease
 ## Project Structure
 
 ```
-KrishiRakshak/
+KrishiSahayak/
 ├── data/
 │   ├── processed_data/    # Processed CSVs
 │   └── plantvillage/      # Raw images
@@ -193,8 +191,8 @@ KrishiRakshak/
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/VIKAS9793/KrishiRakshak-2.0.git
-cd KrishiRakshak-2.0
+git clone https://github.com/VIKAS9793/KrishiSahayak.git
+cd KrishiSahayak
 
 # 2. Install dependencies
 pip install -r requirements.txt
