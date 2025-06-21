@@ -35,19 +35,29 @@ ENV/
 
 # Logs
 *.log
+*.log.*
+logs/
+
+# Data directories
+data/
+!data/README.md
 
 # Checkpoints and models
-# Exclude all model files by default
-models/*.pth
-models/*.onnx
-models/*.tflite
-models/*.pt
+models/
+!models/README.md
 
-# Track only best models
-!models/best_*.pth
-!models/best_*.onnx
-!models/best_*.tflite
-!models/best_*.pt
+# Checkpoints and outputs
+checkpoints/
+outputs/
+
+# Weights & Biases
+wandb/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Local development
+local_config.yaml
 
 # Track final production models
 !models/production_*.pth

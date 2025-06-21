@@ -1,176 +1,182 @@
+"""
+Production-Ready Grad-CAM Implementation for PyTorch Models.
+
+This module provides a reusable GradCAM class designed to be compatible with
+complex model architectures (like the HybridModel) and data formats.
+It decouples the core Grad-CAM logic from visualization, enabling flexible use.
+"""
 import cv2
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from typing import Tuple, List, Optional
+from PIL import Image
+from torchvision import transforms
+from typing import Dict, List, Optional, Tuple
 
 class GradCAM:
     """
-    Generates a Grad-CAM heatmap for a given model and target layer, indicating
-    the regions of an image that are important for a specific class prediction.
-
-    This implementation is designed to be robust and easy to use. It should be
-    used as a context manager to ensure that hooks are properly removed.
-
-    Key Improvements:
-    - Robustness: Validates the target layer name to prevent crashes.
-    - Clarity: Includes comprehensive docstrings and type hints.
-    - Device-Agnostic: Automatically detects and uses the model's device (CPU/GPU).
-    - Resource Management: Uses a context manager (`with`) for automatic hook cleanup.
-    - Explicit Control: Allows specifying which image in a batch to process.
-
-    Example Usage:
-        # Assuming `model`, `input_tensor` are defined and on the correct device.
-        try:
-            # Use the last convolutional layer of a ResNet-like model
-            with GradCAM(model=model, target_layer_name='layer4.2.conv3') as cam_generator:
-                scores = model(input_tensor)
-                class_idx = torch.argmax(scores[0]).item()
-                heatmap = cam_generator(class_idx=class_idx, scores=scores)
-        except (ValueError, RuntimeError) as e:
-            print(f"Error: {e}")
+    A reusable class for generating Gradient-weighted Class Activation Maps (Grad-CAM).
+    Designed to work with models expecting dictionary inputs and complex architectures.
     """
-
-    def __init__(self, model: nn.Module, target_layer_name: str):
-        """
-        Args:
-            model (nn.Module): The model to generate the CAM for.
-            target_layer_name (str): The name of the target layer to hook into.
-        """
+    def __init__(self, model: nn.Module, target_layer: nn.Module):
         self.model = model
-        self.model.eval()
-        self.device = next(model.parameters()).device
-        self.target_layer = self._find_target_layer(target_layer_name)
-        self.activations: Optional[torch.Tensor] = None
-        self.gradients: Optional[torch.Tensor] = None
-        self.hooks: List[torch.utils.hooks.RemovableHandle] = []
+        self.target_layer = target_layer
+        self.gradients = None
+        self.activations = None
 
-    def _find_target_layer(self, layer_name: str) -> nn.Module:
-        """Finds the target layer module by its name and raises an error if not found."""
-        for name, module in self.model.named_modules():
-            if name == layer_name:
-                return module
-        
-        available_layers = [name for name, module in self.model.named_modules() if isinstance(module, nn.Conv2d)]
-        raise ValueError(
-            f"Target layer '{layer_name}' not found. "
-            f"Consider one of the following convolutional layers: {available_layers}"
-        )
+        # Register hooks to the target layer
+        self.target_layer.register_forward_hook(self._forward_hook)
+        self.target_layer.register_full_backward_hook(self._backward_hook)
 
-    def _forward_hook(self, module: nn.Module, input: Tuple[torch.Tensor], output: torch.Tensor):
-        """Saves the activations from the forward pass."""
-        self.activations = output.detach().to(self.device)
+    def _forward_hook(self, module, input, output):
+        """Saves the feature map activations from the forward pass."""
+        self.activations = output
 
-    def _backward_hook(self, module: nn.Module, grad_input: Tuple[torch.Tensor], grad_output: Tuple[torch.Tensor]):
+    def _backward_hook(self, module, grad_input, grad_output):
         """Saves the gradients from the backward pass."""
-        self.gradients = grad_output[0].detach().to(self.device)
+        self.gradients = grad_output[0]
 
-    def _register_hooks(self):
-        """Registers the forward and backward hooks."""
-        self.hooks.append(self.target_layer.register_forward_hook(self._forward_hook))
-        self.hooks.append(self.target_layer.register_full_backward_hook(self._backward_hook))
+    def _get_cam_weights(self, grads: torch.Tensor) -> torch.Tensor:
+        """Computes the alpha weights for CAM."""
+        return torch.mean(grads, dim=(2, 3), keepdim=True)
 
-    def _remove_hooks(self):
-        """Removes all registered hooks."""
-        for hook in self.hooks:
-            hook.remove()
-        self.hooks = []
-
-    def __call__(self, class_idx: int, scores: torch.Tensor, batch_idx: int = 0) -> np.ndarray:
+    def generate_heatmap(
+        self,
+        input_batch: Dict[str, torch.Tensor],
+        target_class: Optional[int] = None
+    ) -> np.ndarray:
         """
         Generates the Grad-CAM heatmap.
 
         Args:
-            class_idx (int): The index of the class to generate the CAM for.
-            scores (torch.Tensor): The output logits/scores from the model.
-            batch_idx (int, optional): The index of the image in the batch to process. Defaults to 0.
+            input_batch (Dict[str, torch.Tensor]): The input batch dictionary, as expected
+                by the model's forward pass.
+            target_class (Optional[int]): The target class index. If None, the class with
+                the highest score will be used.
 
         Returns:
-            np.ndarray: A 2D numpy array representing the normalized heatmap (0 to 1).
+            np.ndarray: The generated heatmap, normalized to [0, 1].
         """
-        if not self.hooks:
-            raise RuntimeError("Hooks are not registered. Use as a context manager ('with' statement).")
-            
-        one_hot = torch.zeros_like(scores, device=self.device)
-        one_hot[batch_idx, class_idx] = 1
+        self.model.eval()
         
+        # 1. Forward pass to get model output
+        output = self.model(input_batch)
+        
+        if target_class is None:
+            target_class = output.argmax(dim=1).item()
+
+        # 2. Backward pass to get gradients
         self.model.zero_grad()
-        scores.backward(gradient=one_hot, retain_graph=True)
+        # Use the score for the target class to compute gradients
+        class_score = output[0, target_class]
+        class_score.backward(retain_graph=True)
 
-        if self.activations is None or self.gradients is None:
-            raise RuntimeError("Could not retrieve activations or gradients.")
+        # Ensure gradients and activations were captured
+        if self.gradients is None or self.activations is None:
+            raise RuntimeError("Failed to capture gradients or activations. Check hook registration.")
 
-        activations = self.activations[batch_idx]
-        gradients = self.gradients[batch_idx]
-        weights = F.adaptive_avg_pool2d(gradients, 1)
+        # 3. Compute the heatmap
+        pooled_gradients = self._get_cam_weights(self.gradients)
+        # Get activations for the first image in the batch
+        activations = self.activations[0].detach()
         
-        cam = torch.sum(weights * activations, dim=0)
-        cam = F.relu(cam)
+        # Weight the feature maps by the gradients
+        heatmap = torch.sum(pooled_gradients[0] * activations, dim=0)
+        heatmap = nn.functional.relu(heatmap)
+        
+        # Normalize the heatmap
+        heatmap /= torch.max(heatmap)
+        
+        return heatmap.cpu().numpy()
 
-        cam -= torch.min(cam)
-        cam /= (torch.max(cam) + 1e-8)
-
-        return cam.cpu().numpy()
-
-    def __enter__(self):
-        self._register_hooks()
-        return self
+def get_target_layer(model: nn.Module, layer_name: str) -> nn.Module:
+    """
+    Retrieves a nested layer from a model using its string name.
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._remove_hooks()
+    Example: get_target_layer(model, 'rgb_backbone.conv_head')
+    """
+    current_module = model
+    for part in layer_name.split('.'):
+        current_module = getattr(current_module, part)
+    if not isinstance(current_module, nn.Module):
+        raise TypeError(f"The specified layer '{layer_name}' is not a valid nn.Module.")
+    return current_module
 
-
-def apply_gradcam_overlay(
-    original_image: np.ndarray,
+def visualize_gradcam(
     heatmap: np.ndarray,
-    alpha: float = 0.5,
-    colormap: int = cv2.COLORMAP_JET
-) -> np.ndarray:
+    image_pil: Image.Image,
+    alpha: float = 0.6
+) -> Image.Image:
     """
-    Applies a Grad-CAM heatmap overlay on the original image.
-    
+    Overlays a heatmap onto an image.
+
     Args:
-        original_image: Input image in RGB format, shape (H, W, 3), values in [0, 255]
-        heatmap: 2D heatmap, shape (H', W'), values in [0, 1]
-        alpha: Opacity of the heatmap overlay [0, 1]
-        colormap: OpenCV colormap constant (e.g., cv2.COLORMAP_JET)
-        
+        heatmap (np.ndarray): The normalized heatmap (H, W).
+        image_pil (Image.Image): The original PIL image.
+        alpha (float): The transparency of the heatmap overlay.
+
     Returns:
-        Overlayed image in RGB format, same shape as original_image
-        
-    Raises:
-        ValueError: If inputs are invalid
+        Image.Image: The original image with the heatmap overlaid.
     """
-    if not (0 <= alpha <= 1):
-        raise ValueError(f"alpha must be between 0 and 1, got {alpha}")
-        
-    if not (isinstance(original_image, np.ndarray) and original_image.ndim == 3):
-        raise ValueError(f"original_image must be 3D numpy array, got {type(original_image)}")
-        
-    if not (isinstance(heatmap, np.ndarray) and heatmap.ndim == 2):
-        raise ValueError(f"heatmap must be 2D numpy array, got {type(heatmap)}")
-        
-    if not (0 <= heatmap.min() and heatmap.max() <= 1.0001): # Allow for small floating point inaccuracies
-        raise ValueError(f"heatmap values must be in range [0, 1], but found min: {heatmap.min()}, max: {heatmap.max()}")
+    # Resize heatmap to match image dimensions
+    heatmap_resized = cv2.resize(heatmap, (image_pil.width, image_pil.height))
+    heatmap_resized = (heatmap_resized * 255).astype(np.uint8)
+
+    # Apply a colormap to the heatmap
+    heatmap_color = cv2.applyColorMap(heatmap_resized, cv2.COLORMAP_JET)
+    heatmap_color = cv2.cvtColor(heatmap_color, cv2.COLOR_BGR2RGB)
+
+    # Convert original image to numpy array
+    image_np = np.array(image_pil)
+
+    # Superimpose the heatmap on the original image
+    overlaid_img_np = (heatmap_color * alpha + image_np * (1 - alpha)).astype(np.uint8)
     
-    # Convert heatmap to uint8 and apply colormap
-    heatmap_uint8 = (heatmap * 255).astype(np.uint8)
-    heatmap_colored = cv2.applyColorMap(heatmap_uint8, colormap)
+    return Image.fromarray(overlaid_img_np)
+
+
+# --- Example Usage with the KrishiSahayak Project ---
+# This demonstrates how the new GradCAM class would be used.
+def example_usage():
+    from src.models.hybrid import HybridModel # Assuming this is our refactored HybridModel
+
+    # 1. Load your trained model
+    # model = HybridModel.load_from_checkpoint('path/to/your/checkpoint.ckpt')
+    model = HybridModel(num_classes=38, backbone_name='efficientnet_b0') # Dummy model for demo
+
+    # 2. Specify the target layer for visualization
+    # This name must correspond to a layer in your HybridModel architecture.
+    target_layer_name = 'rgb_backbone.conv_head'
+    target_layer = get_target_layer(model, target_layer_name)
+
+    # 3. Instantiate the GradCAM utility
+    gradcam_generator = GradCAM(model=model, target_layer=target_layer)
+
+    # 4. Prepare your input image and batch dictionary
+    # This preprocessing should match what was used during training
+    image_path = "path/to/your/rgb_image.jpg"
+    image_pil = Image.open(image_path).convert("RGB")
     
-    # Resize heatmap to match original image dimensions
-    if heatmap.shape != original_image.shape[:2]:
-        heatmap_colored = cv2.resize(heatmap_colored, 
-                                     (original_image.shape[1], original_image.shape[0]))
-    
-    # Convert to BGR for OpenCV if it's a color image
-    if original_image.shape[2] == 3: # RGB to BGR
-        original_bgr = cv2.cvtColor(original_image.astype(np.uint8), cv2.COLOR_RGB2BGR)
-    else: # Grayscale
-        original_bgr = original_image.astype(np.uint8)
-    
-    # Blend images
-    overlay = cv2.addWeighted(original_bgr, 1 - alpha, heatmap_colored, alpha, 0)
-    
-    # Convert back to RGB for consistency
-    return cv2.cvtColor(overlay, cv2.COLOR_BGR2RGB)
+    preprocess = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
+    input_tensor = preprocess(image_pil).unsqueeze(0) # Add batch dimension
+
+    # The batch must match the model's expected input format
+    input_batch = {'image': input_tensor} 
+
+    # 5. Generate the heatmap
+    heatmap_np = gradcam_generator.generate_heatmap(input_batch)
+
+    # 6. Visualize the result
+    final_image = visualize_gradcam(heatmap_np, image_pil)
+    final_image.save("gradcam_result.png")
+    print("Grad-CAM image saved to gradcam_result.png")
+
+if __name__ == '__main__':
+    # This block can be used for testing the implementation
+    # Note: You would need to replace the dummy model and image path with real ones.
+    # example_usage()
+    pass

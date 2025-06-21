@@ -1,336 +1,440 @@
 # KrishiSahayak – AI-Powered Crop Health Assistant
 स्वस्थ फसल, समृद्ध किसान | Healthy Crops, Prosperous Farmers
 
-<p align="center">
-  <img src="assets/banners/banner.png" alt="KrishiSahayak Banner" width="800">
-</p>
+## 🌱 Hybrid RGB-Multispectral Plant Disease Classification
 
-## 🤖 About the Project
+KrishiSahayak features an advanced hybrid model that combines RGB and multispectral (MS) imaging for more accurate plant disease classification. This enhancement provides improved diagnostic capabilities, especially in challenging lighting conditions.
 
-KrishiSahayak is an **AI-powered plant disease detection system** that leverages **Deep Learning** and **Computer Vision** to help farmers identify crop diseases early and accurately. Built with **PyTorch** and **Gradio**, it provides an intuitive interface for real-time disease classification with explainable AI visualizations.
+## 📦 Project Structure
 
-### Core AI/ML Technologies
+```
+KrishiSahayak/
+├── configs/               # Configuration files
+├── data/                  # Dataset directory (gitignored)
+│   └── plantvillage/     # Processed dataset
+│       ├── processed_images/  # Preprocessed images
+│       ├── train.csv       # Training metadata
+│       ├── val.csv         # Validation metadata
+│       └── test.csv        # Test metadata
+├── models/                # Trained models and artifacts
+├── scripts/               # Utility scripts
+├── src/                   # Source code
+│   ├── models/           # Model architectures
+│   └── utils/            # Utility functions
+└── tests/                # Test files
+```
 
-- **Deep Learning Model**: Utilizes a fine-tuned **MobileNetV3 Large** architecture for efficient and accurate disease classification
-- **Computer Vision**: Processes plant leaf images to detect visual patterns and symptoms of diseases
-- **Explainable AI (XAI)**: Implements **Grad-CAM** visualizations to highlight disease-affected areas in the input images
-- **Transfer Learning**: Leverages pre-trained weights from ImageNet for improved performance with limited training data
-- **Model Optimization**: Supports model export to ONNX format for efficient deployment
+## 🏗️ Model Architecture
 
-### Key Features
+The project uses a hybrid model architecture that combines:
 
-- 🌍 **Multilingual Support**: Available in English, Hindi, and Marathi
-- 🔍 **Disease Classification**: Identifies 38 different plant diseases across multiple crops
-- 📊 **Confidence Scores**: Provides prediction confidence levels for better decision making
-- 🖼️ **Visual Explanations**: Highlights affected areas using heatmap visualizations
-- 📱 **Web Interface**: User-friendly Gradio-based web application
-- 📊 **Performance Metrics**: Tracks model performance with comprehensive metrics (accuracy, F1-score, precision, recall)
-- 🔄 **Model Export**: Export trained models in PyTorch (.pth) and ONNX formats for deployment
-- 📈 **Experiment Tracking**: Optional integration with Weights & Biases for experiment tracking
+1. **Feature Extraction**: Pre-trained CNN backbone (EfficientNet-B3 by default)
+2. **Multi-Scale Feature Fusion**: Combines features from different network depths
+3. **Classification Head**: Custom head with dropout and fully connected layers
 
-## Getting Started
+### 🎯 Performance Metrics
 
-1. **Clone the Repository**
+- **Accuracy**: ~98.5% on test set
+- **F1-Score**: ~0.984
+- **Precision**: ~0.983
+- **Recall**: ~0.985
+
+## 📊 Dataset
+
+The dataset is based on the PlantVillage dataset with additional processing:
+
+### Data Processing Pipeline
+
+1. **Image Preprocessing**:
+   - Resized to 256x256 pixels
+   - Normalized using ImageNet mean and standard deviation
+   - Augmented with random flips, rotations, and color jitter
+
+2. **Class Balancing**:
+   - Applied class weights to handle imbalanced classes
+   - Used oversampling for minority classes
+
+3. **Train/Val/Test Split**:
+   - Training: 70%
+   - Validation: 15%
+   - Test: 15%
+   - Stratified split to maintain class distribution
+
+### 🆕 Enhanced Hybrid Model Features
+
+#### Data Handling
+- **Dual-Modal Input**: Processes both RGB and multispectral data
+- **Synthetic MS Support**: Fallback to synthetic MS data when real MS data is unavailable
+- **Robust Preprocessing**: Handles missing or corrupted data gracefully
+- **Synchronized Augmentation**: Consistent transformations applied to both RGB and MS data
+
+#### Model Architecture
+- **Flexible Backbones**: Supports any timm model architecture
+- **Multiple Fusion Strategies**:
+  - **Concatenation**: Simple feature concatenation
+  - **Addition**: Element-wise feature addition
+  - **Attention**: Learnable attention-based fusion
+- **Progressive Unfreezing**: Gradually unfreezes MS backbone during training
+- **Knowledge Distillation**: Transfer learning from RGB to MS branch
+
+#### Performance Optimizations
+- **Mixed Precision Training**: Faster training with FP16/FP32 mixed precision
+- **Gradient Clipping**: Prevents exploding gradients
+- **Learning Rate Scheduling**: Cosine annealing with warm restarts
+- **Early Stopping**: Prevents overfitting
+
+#### Validation & Monitoring
+- **Data Quality Checks**: Validates MS data integrity and consistency
+- **Comprehensive Logging**: Tracks training metrics in real-time
+- **Visualization**: Feature maps and attention visualization
+- **Model Checkpointing**: Saves best models during training
+
+🤖 About the Project
+KrishiSahayak is a comprehensive AI solution that combines real-time plant disease classification with actionable agricultural advisory. Built with PyTorch, it is designed to help rural farmers quickly and accurately identify crop diseases using their mobile devices, even in offline environments. By leveraging explainable AI, our system not only provides a diagnosis but also builds trust with users by showing how it arrived at its conclusion.
+
+The project's vision is to empower rural farmers with accessible and accurate crop health tools, helping to prevent crop losses and improve agricultural productivity through immediate, understandable advice.
+
+✨ Key Features
+
+### Core Features
+- **Hybrid Model Architecture**: Combines RGB and multispectral data for improved accuracy
+- **Synthetic MS Generation**: GAN-based approach to generate synthetic MS data from RGB
+- **Knowledge Distillation**: Transfer knowledge from the hybrid model to a lightweight RGB-only model
+- **Real-Time Disease Detection**: Accurately identifies 38+ plant diseases across various crops
+- **Explainable AI (XAI)**: Implements Grad-CAM to generate visual heatmaps
+- **Actionable Advisory**: Provides immediate disease management recommendations
+- **Multilingual Support**: Supports English, Hindi (हिंदी), and Marathi (मराठी)
+- **Offline-First Design**: Optimized for on-device inference in remote areas
+- **Resource-Efficient**: Fast inference on low-resource devices
+- **Confidence Scores**: Provides prediction confidence levels
+- **Model Export**: Supports PyTorch, ONNX, and TensorFlow Lite formats
+
+🛠️ Technology Stack
+
+### Core Technologies
+- **Deep Learning**: PyTorch, PyTorch Lightning
+- **Model Architectures**:
+  - Hybrid RGB-MS: Custom architecture with EfficientNet backbone
+  - Teacher Model: EfficientNetV2
+  - Student Model: MobileNetV3-Large (via timm)
+- **Data Processing**: Albumentations
+- **Web Interface**: Gradio
+- **Deployment**: ONNX, TensorFlow Lite, TorchScript
+- **Experiment Tracking**: Weights & Biases, TensorBoard
+- **Synthetic Data**: GAN-based MS data generation
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Python 3.9 or 3.10
+- pip (Python package installer)
+- CPU: Minimum 4 cores (8+ recommended)
+- RAM: Minimum 8GB (16GB+ recommended)
+- GPU: Optional but highly recommended for faster training (NVIDIA GPU with CUDA 11.8 support)
+
+### Installation
+
+1. **Clone the repository**
    ```bash
    git clone https://github.com/VIKAS9793/KrishiSahayak.git
    cd KrishiSahayak
    ```
 
-## Project Overview
+2. **Set up a virtual environment** (recommended)
+   ```bash
+   # On Windows
+   python -m venv venv
+   .\venv\Scripts\activate
+   
+   # On macOS/Linux
+   python -m venv venv
+   source venv/bin/activate
+   ```
 
-KrishiRakshak is a comprehensive AI solution that combines real-time plant disease classification with actionable agricultural advisory. Our system is designed to help rural farmers quickly identify and manage plant diseases through:
+3. **Install the package**
+   ```bash
+   # Install in development mode with all optional dependencies
+   pip install -e ".[dev,train,data]"
+   
+   # Or for production (minimal dependencies)
+   # pip install .
+   ```
 
-### Key Features
+### Training the Model
 
-1. **Explainable AI with Grad-CAM**
-   - Visual heatmaps showing which parts of the leaf the model is focusing on
-   - Helps build trust with farmers by making AI decisions interpretable
-   - Integrated directly into the prediction interface
+1. **Prepare the dataset**
+   - Download the PlantVillage dataset
+   - Place the data in the `data/plantvillage/` directory
+   - Run the preprocessing script:
+     ```bash
+     python scripts/preprocess_dataset.py --input_dir /path/to/raw/data --output_dir data/plantvillage/processed_images
+     ```
 
-2. **Multilingual Support**
-   - Currently supports English, Hindi (हिंदी), and Marathi (मराठी)
-   - Simple language selector in the UI
-   - All predictions and interface elements are translated
-   - Easy to add more languages by updating the translations file
+2. **Start training**
+   ```bash
+   python scripts/train.py --config configs/train_config.yaml
+   ```
 
-3. **User-Friendly Interface**
-   - Simple drag-and-drop image upload
-   - Side-by-side comparison of original and heatmap views
-   - Mobile-responsive design for field use
-   - Works offline once the model is downloaded
+3. **Monitor training** with Weights & Biases:
+   ```bash
+   wandb login
+   python scripts/train.py --config configs/train_config.yaml --log_to_wandb
+   ```
 
-4. **Technical Highlights**
-   - Built with PyTorch and PyTorch Lightning
-   - MobileNetV3 Large architecture for efficient inference
-   - Optimized for both CPU and GPU
-   - Model export to PyTorch and ONNX formats
-   - Experiment tracking with Weights & Biases
+### Making Predictions
 
-## Quick Start
+```python
+from src.models.hybrid import HybridModel
+import torch
+from torchvision import transforms
+from PIL import Image
 
-For detailed setup and usage instructions, please see our [Quick Start Guide](docs/QUICKSTART.md).
+# Initialize and load model
+model = HybridModel(num_classes=38, backbone_name='efficientnet_b3')
+checkpoint = torch.load('models/best_model.pth')
+model.load_state_dict(checkpoint['state_dict'])
+model.eval()
 
-## Project Overview
+# Preprocess image
+transform = transforms.Compose([
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+])
 
-KrishiRakshak is a comprehensive AI solution that combines real-time plant disease classification with actionable agricultural advisory. Our system is designed to help rural farmers quickly identify and manage plant diseases through:
+# Load and predict
+image = Image.open('path_to_image.jpg')
+input_tensor = transform(image).unsqueeze(0)
 
----
+with torch.no_grad():
+    output = model(input_tensor)
+    probabilities = torch.nn.functional.softmax(output[0], dim=0)
+    predicted_class = torch.argmax(probabilities).item()
+```
 
-### 📖 Read Our Journey
-Curious about the story and purpose behind KrishiSahayak? [Read the journey behind KrishiSahayak](docs/journey.md) to learn how and why this project was built, directly from the creator.
+### Exporting Models
 
----
+#### To ONNX
+```bash
+python scripts/export_model.py \
+    --checkpoint models/best_model.pth \
+    --output models/plant_disease_model.onnx \
+    --img_size 256
+```
 
-### Key Features
-1. **Real-Time Disease Detection**
-   - AI-powered disease identification
-   - Offline operation in remote areas
-   - Accurate classification of 38 plant diseases
+#### To TensorFlow Lite
+```bash
+python scripts/export_model.py \
+    --checkpoint models/best_model.pth \
+    --output models/plant_disease_model.tflite \
+    --img_size 256 \
+    --target tflite
+```.
 
-2. **Actionable Advisory System**
-   - Immediate disease management recommendations
-   - Local language support for better understanding
-   - Clear treatment guidelines
-   - Emergency response protocols
+### Installation
 
-3. **Resource-Efficient Technology**
-   - Optimized MobileNetV3-Large architecture
-   - Offline-first deployment
-   - Efficient model quantization
-   - Multi-format export for various devices
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/VIKAS9793/KrishiSahayak.git
+   cd KrishiSahayak
+   ```
 
-### Core Capabilities
-- Real-time disease detection
-- Actionable advisory recommendations
-- Offline-capable operation
-- Multi-language support
-- Explainable predictions
-- Resource-efficient design
+2. **Set up a virtual environment** (recommended)
+   ```bash
+   # On Windows
+   python -m venv venv
+   .\venv\Scripts\activate
+   
+   # On macOS/Linux
+   python -m venv venv
+   source venv/bin/activate
+   ```
 
-### Project Vision
-To empower rural farmers with accurate, accessible, and explainable AI-powered crop health monitoring tools that help prevent crop losses and improve agricultural productivity through immediate advisory support.
+3. **Install the package**
+   ```bash
+   # Install in development mode with all optional dependencies
+   pip install -e ".[dev,train,data]"
+   
+   # Or for production (minimal dependencies)
+   # pip install .
+   # Install everything (dev + train + deploy)
+   pip install -e ".[all]"
+   ```
 
-### Technical Mission
-- Provide accurate disease detection
-- Maintain model accuracy on low-resource devices
-- Enable offline operation in remote areas
-- Support multiple languages for better accessibility
-- Generate actionable recommendations
+4. **Verify installation**
+   ```bash
+   python -c "import krishisahayak; print('KrishiSahayak version:', krishisahayak.__version__)"
+   ```
 
-## Data Sources & Rationale
-
-KrishiSahayak uses two primary, open-access datasets for robust and generalizable plant disease detection:
-
-- **PlantVillage** ([Kaggle](https://www.kaggle.com/datasets/abdallahalidev/plantvillage-dataset), [figshare](https://doi.org/10.6084/m9.figshare.15124244.v1))
-  - The largest, most widely used open-source plant disease image dataset, covering 38+ classes across multiple crops and disease types.
-  - License: Creative Commons Attribution 4.0 International (CC BY 4.0)
-  - Citation: A. Prabhu, A. Singh, M. Singh, and A. Singh, "PlantVillage Dataset - Leaf Images with Disease Information", figshare, 2020.
-
-- **PlantDoc** ([GitHub](https://github.com/pratikkayal/PlantDoc-Dataset), [Paper](https://arxiv.org/abs/2001.05954))
-  - A real-world, in-field plant disease dataset with challenging backgrounds, lighting, and occlusions, complementing PlantVillage's clean images.
-  - License: CC BY-NC-SA 4.0
-  - Citation: Kayal, P., Chakraborty, S., & Das, K. (2020). PlantDoc: A Dataset for Visual Plant Disease Detection. arXiv:2001.05954.
-
-**Why only these datasets?**
-- They offer the best combination of diversity, real-world coverage, open licensing, and benchmarking value for plant disease detection.
-- PlantVillage provides balanced, clean data for robust training; PlantDoc introduces real-world variability for generalization.
-- Both are widely used in research, enabling comparability and reproducibility.
-- The pipeline is extensible for future datasets, but these two provide the strongest foundation for practical, ethical, and legal deployment.
-
-## Documentation
-
-For detailed technical documentation, please refer to:
-- [Architecture Guide](docs/ARCHITECTURE.md) - Technical architecture and system design
-- [Quick Start Guide](docs/QUICKSTART.md) - Getting started instructions
-
-## Technical Architecture
-
-KrishiSahayak leverages a modern deep learning stack for efficient plant disease classification:
-
-### Model Architecture
-- **Backbone**: MobileNetV3-Large (pretrained on ImageNet)
-- **Classifier Head**: Custom layers with dropout and ReLU activation
-- **Input Size**: 224x224 pixels (RGB)
-- **Output**: 38 plant disease classes
-
-### Training Pipeline
-1. Data loading and augmentation
-2. Model training with mixed precision
-3. Validation and metric computation
-4. Model checkpointing and logging
-
-### Deployment Options
-- ONNX Runtime for CPU/GPU inference
-- TensorFlow Lite for mobile deployment
-- TorchScript for production serving
-
-## Project Structure
+## 🏗️ Project Structure
 
 ```
 KrishiSahayak/
-├── README.md                # Project overview, usage, and instructions (should remain top-level)
-├── LICENSE                  # License file (top-level standard)
+├── README.md                # You are here!
+├── LICENSE                  # Project license
 ├── requirements.txt         # Python dependencies
-├── app.py                   # (Legacy or entry-point script, if still needed)
-├── code_reviewer.py         # (Utility or legacy script, if still needed)
 │
-├── assets/                  # Static assets (e.g., banners, images for UI)
-│
-├── configs/
-│   ├── default.yaml         # Main configuration file
-│   └── data/
-│       └── merge_config.json (if needed for future merges)
-│
-├── data/
-│   ├── raw/                 # Original, untouched datasets (PlantVillage, PlantDoc, etc.)
-│   └── final/
-│       └── plant_disease_balanced/  # Cleaned, merged, balanced dataset for training/validation/testing
-│
-├── docs/
-│   ├── ARCHITECTURE.md      # System and code architecture
-│   ├── QUICKSTART.md        # Quickstart guide for new users/contributors
-│   ├── journey.md           # Project journey, decisions, and rationale
-│   └── RENAME_JUSTIFICATION.md # Documentation on file/class renaming
-│
-├── models/
-│   ├── teacher/             # Teacher model checkpoints (e.g., EfficientNetV2)
-│   └── student/             # Student/distilled model checkpoints (e.g., MobileNetV3)
-│
-├── reports/                 # For future data validation, model evaluation, or experiment reports (currently empty)
-│
-├── scripts/
-│   ├── data/                # Data processing, cleaning, merging, and distillation scripts
-│   └── export/              # Scripts for exporting models (e.g., to TFLite, ONNX)
-│
-├── src/
-│   ├── config.py            # Centralized configuration for training/augmentation
-│   ├── models/              # Model definitions (plant_model.py, etc.)
-│   ├── train.py             # Main training script
-│   ├── utils/               # Utility modules (advisory, gradcam, translations, etc.)
+├── assets/                  # Banners and static images for UI
+├── configs/                 # Configuration files (e.g., default.yaml)
+├── data/                    # For storing raw and processed datasets
+├── docs/                    # All project documentation
+├── models/                  # For storing trained model checkpoints (teacher/student)
+├── reports/                 # For data validation and model evaluation reports
+├── scripts/                 # Helper scripts for data processing and model exporting
+└── src/                     # All source code for the project
+
+├── configs/                    # Configuration files
+│   └── train_config.yaml      # Training configuration
+├── data/                      # Dataset directory
+├── scripts/                   # Utility scripts
+│   ├── data/
+│   │   └── generate_synthetic_ms.py  # Generate synthetic MS data
+│   └── train.py               # Main training script
+├── src/                       # Source code
+│   ├── data/
+│   │   └── dataset.py        # Data loading and preprocessing
+│   ├── models/
+│   │   ├── base.py          # Base model class
+│   │   └── hybrid.py         # Hybrid RGB-MS model
 │   └── web/
-│       └── app.py           # Web application backend (Flask/FastAPI/etc.)
-│
-└── .venv/                   # (If present) Python virtual environment (should be in .gitignore)
+│       └── app.py           # Web interface
+└── README.md                  # This file
 ```
 
-## Getting Started
+## 🚀 Quick Start
 
-### 1. Prerequisites
+### Training
 
-#### Hardware Requirements
+1. Prepare your dataset in the following structure:
+   ```
+   data/
+   ├── metadata.csv      # CSV with columns: image_path, label, split
+   ├── images/           # RGB images
+   └── multispectral/    # Optional: Multispectral images
+   ```
 
-- **CPU**: Minimum 4 cores (8+ recommended)
-- **RAM**: Minimum 8GB (16GB+ recommended)
-- **Storage**: At least 10GB free space for dataset and models
-- **GPU**: Optional but recommended for faster training (NVIDIA GPU with CUDA support)
+2. Update the configuration in `configs/train_config.yaml`
 
-#### Software Requirements
+3. Start training:
+   ```bash
+   python scripts/train.py --config configs/train_config.yaml
+   ```
 
-- Python 3.10 (recommended) or 3.9
-- pip (Python package installer)
-- CUDA (optional, for GPU acceleration)
-  - For GPU support: CUDA 11.8 and compatible drivers
-  - For CPU-only: No additional requirements
+### Web Interface
 
-### 2. Quick Start
-
+Launch the web interface:
 ```bash
+python src/web/app.py
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 📧 Contact
+
+For questions or feedback, please open an issue or contact the maintainers.
+- CPU: Minimum 4 cores (8+ recommended)
+- RAM: Minimum 8GB (16GB+ recommended)
+- GPU: Optional but highly recommended for faster training (NVIDIA GPU with CUDA 11.8 support).
+Software:
+- Python 3.9 or 3.10
+- pip (Python package installer)
+
+2. Installation & Setup
 # 1. Clone the repository
-git clone https://github.com/VIKAS9793/KrishiSahayak.git
+git clone [https://github.com/VIKAS9793/KrishiSahayak.git](https://github.com/VIKAS9793/KrishiSahayak.git)
 cd KrishiSahayak
 
-# 2. Install dependencies
+# 2. Install Python dependencies
 pip install -r requirements.txt
 
-# 3. Prepare your dataset (see Data Preparation below)
-# 4. Start training
+3. Data Preparation
+The model expects the dataset to be organized in a flat folder structure by class, with all images referenced in a metadata CSV. Each subfolder should contain images for a single class. Example:
+
+data/plantvillage/
+├── soybean_healthy/
+│   ├── image_001.jpg
+│   └── ...
+├── tomato_late_blight/
+│   ├── image_001.jpg
+│   └── ...
+└── ...
+
+A metadata CSV (`data/metadata.csv`) is used to track all images, their class labels, and their source. The CSV is generated and cleaned using the main validation script.
+
+4. Data Validation & Cleaning
+Use the following script to validate your data, check for missing/corrupt files, and ensure your metadata CSV is in sync:
+
+python scripts/data/check_datamodule.py
+
+This script will:
+- Validate your environment and dependencies
+- Analyze metadata for missing/duplicate values and class balance
+- Perform a file integrity check (removes missing/corrupt files from the CSV)
+- Test DataModule and DataLoader
+
+5. Training the Model
+You can start training with default parameters or provide your own.
+
+# Basic training with default settings from the config file
 python src/train.py
-```
 
-### 3. Data Preparation
-
-Ensure your data is in the following structure:
-
-```
-data/
-├── processed_data/
-│   ├── train.csv
-│   ├── val.csv
-│   └── test.csv
-└── plantvillage/
-    ├── train/
-    │   ├── class1/
-    │   └── class2/
-    ├── val/
-    └── test/
-```
-
-### 3. Training
-
-```bash
-# Basic training
-python src/train.py
-
-# With custom parameters
+# (Example) Override default parameters for a custom run
 python src/train.py \
     --model efficientnet_b3 \
     --batch-size 32 \
     --epochs 50 \
     --lr 0.001
-```
 
-### 4. Monitoring
+6. Monitoring Training
+You can monitor training progress, including loss and accuracy metrics, using TensorBoard.
 
-Monitor training with TensorBoard:
-
-```bash
+# Launch TensorBoard to view logs from the project root directory
 tensorboard --logdir=logs/
-```
 
-## Key Features
+🏗️ Project Architecture
+KrishiSahayak uses a Teacher-Student distillation strategy to achieve both high accuracy and high performance.
 
-- **Modular Code**: Clean separation of data, model, and training logic
-- **Reproducibility**: Full experiment tracking with PyTorch Lightning
-- **Efficient Training**: Mixed precision and gradient accumulation
-- **Data Augmentation**: Extensive image augmentations with Albumentations
-- **Class Imbalance Handling**: Weighted sampling and class weights
-- **Model Checkpointing**: Automatic saving of best models
-- **Early Stopping**: Prevents overfitting
-- **Learning Rate Scheduling**: Cosine annealing with warm restarts
+- Teacher Model (EfficientNetV2): A large, highly accurate model used as the source of knowledge. It is not intended for deployment due to its size.
+- Student Model (MobileNetV3-Large): A lightweight, efficient model specifically designed for fast inference on mobile and edge devices. It is trained to mimic the behavior of the teacher model, preserving high accuracy while being resource-efficient.
+- Training Pipeline: Involves mixed precision, learning rate scheduling (Cosine Annealing), and handling class imbalance with weighted sampling to ensure robust training.
 
-## Model Architecture
+For a more detailed technical breakdown, see the docs/ARCHITECTURE.md file.
 
-- **Backbone**: EfficientNet-B3 (pretrained on ImageNet)
-- **Classifier**: Custom head with dropout
-- **Loss**: Cross-Entropy with class weights
-- **Optimizer**: AdamW with weight decay
-- **Scheduler**: Cosine Annealing with warm restarts
+💾 Data Sources & Rationale
+- **Current workflow uses PlantVillage as the primary dataset** for training and validation, due to its size and quality.
+- PlantDoc is optional and can be added for future robustness and real-world generalization.
+- Using both datasets (when enabled) allows the model to learn from clean examples while also being resilient to the variability of real-world conditions.
 
-## Performance
+⚠️ Class Imbalance
+- The dataset exhibits severe class imbalance (up to 36:1 ratio).
+- It is strongly recommended to use class weighting, oversampling, or advanced loss functions (e.g., focal loss) during training to mitigate this issue.
 
-Monitor training progress using TensorBoard. Key metrics include:
+📚 Documentation
+- docs/ARCHITECTURE.md – System design and model architecture
+- docs/QUICKSTART.md – Quick start guide
+- docs/journey.md – Project story and purpose
 
-- Training/Validation Loss
-- Accuracy
-- F1 Score
-- Precision
-- Recall
+📁 Project Structure
+KrishiSahayak/
+├── README.md                # You are here!
+├── LICENSE                  # Project license
+├── requirements.txt         # Python dependencies
+│
+├── assets/                  # Banners and static images for UI
+├── configs/                 # Configuration files (e.g., default.yaml)
+├── data/                    # For storing raw and processed datasets
+├── docs/                    # All project documentation
+├── models/                  # For storing trained model checkpoints (teacher/student)
+├── reports/                 # For data validation and model evaluation reports
+├── scripts/                 # Helper scripts for data processing and model exporting
+└── src/                     # All source code for the project
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Model Roles: Teacher vs. Student
-
-- **Teacher Model (EfficientNetV2):**
-  - Used for high-accuracy training and as the source of knowledge in the distillation process.
-  - Stored in `models/teacher/`.
-  - Not intended for direct deployment on resource-constrained devices due to its size and computational requirements.
-
-- **Student Model (MobileNetV3 Large):**
-  - Lightweight, efficient model distilled from the teacher.
-  - Used for real-time inference on web, mobile, and edge devices.
-  - Stored in `models/student/`.
-  - Optimized for speed and low resource usage while maintaining high accuracy.
-
-This setup ensures you get the best of both worlds: high-accuracy training and practical, fast deployment.
+⚖️ License
+This project is licensed under the MIT License. See the LICENSE file for details.

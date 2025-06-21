@@ -1,0 +1,867 @@
+# KrishiSahayak - Unified Configuration
+# Final production-ready version.
+
+# Core Settings
+project:
+  name: "KrishiSahayak"
+  version: "1.0.0"
+  seed: 42
+  experiment_name: "EfficientNetV2S_Hybrid_Run"  # Will be used for logging and saving checkpoints
+  output_dir: "output"  # Base directory for all outputs
+  description: "Hybrid RGB+MS plant disease classification model"  # Optional description
+  
+# Environment settings
+environment:
+  cudnn_benchmark: true  # Enable cuDNN benchmark for faster training (if input size is fixed)
+  deterministic: false  # Set to true for full reproducibility (may be slower)
+  precision: "16-mixed"  # Training precision: "32-true", "16-mixed", "bf16-mixed"
+
+# Hardware and Distributed Training Configuration
+hardware:
+  # Basic hardware settings
+  accelerator: "auto"  # 'cpu', 'gpu', 'tpu', 'ipu', 'auto', None
+  devices: "auto"  # Number of devices, list of device indices, or 'auto'
+  num_nodes: 1  # Number of nodes for distributed training
+  
+  # Distributed training strategy
+  strategy: "auto"  # 'ddp', 'ddp_spawn', 'deepspeed', 'fsdp', 'deepspeed_stage_3_offload', 'auto'
+  
+  # Mixed precision training
+  precision: "16-mixed"  # '32-true', '16-mixed', 'bf16-mixed', '64-true'
+  amp_backend: "native"  # 'native' (PyTorch AMP) or 'apex' (NVIDIA Apex)
+  
+  # Performance optimization
+  benchmark: true  # Enable cudnn.benchmark for faster training (if input size is fixed)
+  deterministic: false  # For full reproducibility (may be slower)
+  benchmark_cudnn: true  # Enable cuDNN benchmark
+  
+  # Memory management
+  gradient_checkpointing: false  # Enable gradient checkpointing (saves memory, slower)
+  find_unused_parameters: false  # Find unused parameters in model (for DDP)
+  sync_batchnorm: false  # Convert BatchNorm to SyncBatchNorm (for multi-GPU)
+  
+  # Distributed training settings
+  distributed:
+    # General distributed settings
+    backend: "nccl"  # 'nccl', 'gloo', 'mpi', 'ccl'
+    init_method: "env://"  # Initialization method for distributed training
+    timeout: timedelta(minutes=30)  # Timeout for distributed operations
+    
+    # DDP specific settings
+    ddp:
+      broadcast_buffers: true  # Sync buffers at the start of training
+      bucket_cap_mb: 25  # Bucket size for DDP in MB
+      gradient_as_bucket_view: false  # Use gradient as bucket view (saves memory)
+      static_graph: false  # Enable static graph optimization
+      
+    # DeepSpeed configuration (if using DeepSpeed)
+    deepspeed:
+      config: null  # Path to DeepSpeed config file or dict
+      zero_optimization: true  # Enable ZeRO optimization
+      stage: 2  # ZeRO optimization stage (1, 2, or 3)
+      offload_optimizer: false  # Offload optimizer to CPU
+      offload_parameters: false  # Offload parameters to CPU
+      
+    # FSDP (Fully Sharded Data Parallel) configuration
+    fsdp:
+      min_num_params: 1e8  # Minimum number of parameters for FSDP
+      cpu_offload: false  # Offload parameters to CPU
+      flatten_parameters: true  # Flatten parameters for better efficiency
+      
+  # GPU specific settings
+  gpu:
+    allow_memory_growth: true  # Allow GPU memory growth (for TensorFlow compatibility)
+    memory_fraction: 1.0  # Fraction of GPU memory to allocate
+    force_gpu: false  # Force GPU usage even if CPU is available
+    
+  # TPU specific settings
+  tpu:
+    num_cores: 8  # Number of TPU cores (1, 8, or 32)
+    debug: false  # Enable TPU debugging
+    
+  # IPU specific settings
+  ipu:
+    num_replicas: 1  # Number of IPU replicas
+    fp16: false  # Use FP16 on IPU
+    
+  # CPU specific settings
+  cpu:
+    num_workers: 4  # Number of CPU workers for data loading
+    pin_memory: true  # Pin memory for faster data transfer to GPU
+    
+  # Memory usage monitoring
+  memory:
+    log_memory_usage: true  # Log memory usage
+    log_memory_interval: 10  # Log memory usage every N steps
+    
+  # Profiling
+  profile:
+    enabled: false  # Enable PyTorch profiler
+    schedule: "none"  # Profiling schedule: 'none', 'warmup', 'step', 'epoch'
+    activities: ["cpu", "cuda"]  # Activities to profile
+    record_shapes: true  # Record input shapes
+    profile_memory: true  # Profile memory usage
+    with_stack: false  # Record stack traces
+    with_flops: true  # Estimate FLOPS
+    
+  # System resource limits
+  limits:
+    max_epochs: 1000  # Maximum number of training epochs
+    max_steps: -1  # Maximum number of training steps (-1 for no limit)
+    max_time: null  # Maximum training time (e.g., '00:24:00' for 24 hours)
+    
+  # Checkpointing and resuming
+  checkpoint:
+    auto_resume: true  # Automatically resume from the latest checkpoint
+    resume_from_checkpoint: null  # Path to checkpoint to resume from
+    
+  # Random seeds for reproducibility
+  seed: 42  # Global random seed
+  seed_workers: true  # Seed workers for deterministic data loading
+  deterministic: false  # Make PyTorch operations deterministic (slower)
+  
+  # Debugging
+  debug:
+    detect_anomaly: false  # Enable anomaly detection for autograd
+    overfit_batches: 0.0  # Overfit on N batches (float for fraction, int for exact number)
+    fast_dev_run: false  # Run a single batch for debugging
+    limit_train_batches: 1.0  # Fraction or number of training batches to use
+    limit_val_batches: 1.0  # Fraction or number of validation batches to use
+    limit_test_batches: 1.0  # Fraction or number of test batches to use
+    
+  # Performance tuning
+  tuning:
+    auto_scale_batch_size: null  # 'power' or 'binsearch' to find batch size
+    auto_lr_find: false  # Run learning rate finder
+    auto_select_gpus: false  # Automatically select available GPUs
+    replace_sampler_ddp: true  # Replace sampler for DDP
+    
+  # System
+  system:
+    env: {}  # Environment variables to set
+    cuda_visible_devices: ""  # CUDA_VISIBLE_DEVICES value
+    tpu_cores: null  # TPU cores to use (for TPU training)
+    ipus: null  # IPUs to use (for IPU training)
+
+# Model Export and Deployment Configuration
+export:
+  # General export settings
+  enabled: true  # Enable model export
+  format: ["torchscript", "onnx", "saved_model"]  # Export formats
+  output_dir: "exported_models"  # Directory to save exported models
+  model_name: "krishisahayak"  # Base name for exported model files
+  version: "1.0.0"  # Model version
+  
+  # PyTorch export settings
+  torchscript:
+    enabled: true
+    optimize_for_mobile: false  # Optimize for mobile deployment
+    scripted: true  # Use torch.jit.script (vs trace)
+    strict: true  # Enable/disable strict type checking
+    
+  # ONNX export settings
+  onnx:
+    enabled: true
+    opset_version: 14  # ONNX opset version
+    dynamic_axes:  # Dynamic axes for variable length inputs
+      input: {0: 'batch', 2: 'height', 3: 'width'}
+      output: {0: 'batch'}
+    export_params: true  # Store the trained parameter weights
+    do_constant_folding: true  # Whether to execute constant folding
+    input_names: ["input"]  # Model input names
+    output_names: ["output"]  # Model output names
+    dynamic_axes_enabled: true  # Enable dynamic axes
+    keep_initializers_as_inputs: true  # Keep initializers as inputs
+    
+  # TensorFlow SavedModel export settings
+  saved_model:
+    enabled: false  # Requires ONNX to TensorFlow conversion
+    save_format: "tf"  # 'tf' or 'keras'
+    signature_def_key: "serving_default"  # Signature def key
+    tags: ["serve"]  # Tags for the meta graph
+    
+  # CoreML export settings
+  coreml:
+    enabled: false
+    target_os: "ios16"  # Target OS version
+    compute_units: "ALL"  # 'ALL', 'CPU_AND_GPU', 'CPU_ONLY'
+    minimum_deployment_target: "13.0"  # Minimum deployment target
+    
+  # TensorRT optimization settings
+  tensorrt:
+    enabled: false
+    precision: "FP16"  # 'FP32', 'FP16', 'INT8'
+    max_workspace_size: 1 << 30  # 1GB
+    max_batch_size: 1
+    
+  # OpenVINO optimization settings
+  openvino:
+    enabled: false
+    precision: "FP16"  # 'FP32', 'FP16', 'INT8'
+    batch_size: 1
+    
+  # Quantization settings
+  quantization:
+    enabled: false
+    dtype: "qint8"  # 'qint8', 'quint8', 'float16'
+    per_channel: true
+    reduce_range: true
+    
+  # Model optimization
+  optimization:
+    enabled: true
+    optimizations: ["fuse_layers", "remove_dropout"]
+    
+  # Model validation
+  validation:
+    enabled: true
+    test_dataset: "data/val"  # Path to test dataset for validation
+    num_samples: 32  # Number of samples to use for validation
+    metrics: ["accuracy", "latency", "throughput"]
+    
+  # Deployment targets
+  deployment:
+    # Local deployment
+    local:
+      enabled: true
+      serve_rest: true  # Serve via REST API
+      serve_grpc: false  # Serve via gRPC
+      port: 8080  # Port for serving
+      
+    # Cloud deployment
+    cloud:
+      enabled: false
+      provider: "aws"  # 'aws', 'gcp', 'azure', 'alicloud'
+      region: "us-west-2"
+      instance_type: "ml.m5.xlarge"
+      
+    # Edge deployment
+    edge:
+      enabled: false
+      platform: "jetson"  # 'jetson', 'coral', 'raspberrypi', 'openvino'
+      
+    # Mobile deployment
+    mobile:
+      enabled: false
+      platform: "android"  # 'android', 'ios', 'both'
+      quantize: true  # Quantize for mobile
+      
+  # Model documentation
+  documentation:
+    enabled: true
+    format: "markdown"  # 'markdown', 'html', 'pdf'
+    include:
+      - model_architecture
+      - training_config
+      - performance_metrics
+      - input_output_format
+      - example_usage
+      - license
+    
+  # Model packaging
+  package:
+    enabled: true
+    include:
+      - exported_model
+      - config
+      - example_scripts
+      - requirements.txt
+      - README.md
+    archive_format: "zip"  # 'zip', 'tar.gz'
+    
+  # Model registry
+  registry:
+    enabled: false
+    url: ""  # URL to model registry
+    api_key: ""  # API key for authentication
+    model_id: ""  # Model ID in registry
+    
+  # Model monitoring
+  monitoring:
+    enabled: false
+    endpoint: ""  # Monitoring endpoint
+    metrics: ["latency", "throughput", "error_rate"]
+    
+  # Model versioning
+  versioning:
+    strategy: "semver"  # 'semver', 'date', 'commit_hash'
+    auto_increment: true  # Auto-increment version
+    
+  # Model security
+  security:
+    encrypt_weights: false
+    checksum: true  # Generate checksum for model files
+    
+  # Post-export actions
+  post_export:
+    test_inference: true  # Run test inference after export
+    generate_docs: true  # Generate documentation
+    push_to_registry: false  # Push to model registry
+    notify: false  # Send notification when done
+
+# Data Configuration
+data:
+  # Input paths for datasets
+  datasets:
+    plantdoc:
+      path: "data/plantdoc"  # Root directory for PlantDoc
+      
+    plantvillage:
+      path: "data/plantvillage"  # Root directory for PlantVillage
+  
+  # Output paths
+  processed_dir: "data/processed"  # For processed data and metadata
+  
+  # Image settings
+  image_size: [224, 224]  # Target image size
+  
+  # Data loading
+  num_workers: 4
+  pin_memory: true
+  persistent_workers: true
+  
+  # Dataset splitting
+  min_samples_per_class: 10  # Minimum samples required per class
+  split_ratios:
+    train: 0.7
+    val: 0.15
+    test: 0.15
+  
+  # Data validation
+  validate: true  # Whether to run validation after preparation
+  fix_issues: false  # Whether to attempt fixing validation issues
+  
+  # Disable synthetic MS generation for now
+  generate_synthetic_ms: false
+
+# Model Configuration
+model:
+  # Core model settings
+  model_type: "hybrid"  # Options: 'rgb_only', 'hybrid', 'ms_only'
+  num_classes: 38  # Number of output classes
+  
+  # Backbone configuration
+  backbone: "efficientnetv2_rw_s"  # Backbone architecture
+  pretrained: true  # Use pretrained weights
+  freeze_backbone: false  # Freeze backbone layers
+  freeze_bn: true  # Freeze batch norm layers
+  
+  # Input configuration
+  in_channels: 3  # Number of input channels (3 for RGB)
+  input_size: [224, 224]  # Input image size [height, width]
+  
+  # Multispectral data configuration
+  use_ms: true  # Enable multispectral data
+  ms_bands: 4  # Number of spectral bands
+  ms_backbone: "efficientnetv2_rw_s"  # Backbone for MS stream (can be same as RGB)
+  ms_pretrained: false  # Use pretrained weights for MS backbone
+  ms_freeze_backbone: false  # Freeze MS backbone layers
+  
+  # Feature fusion configuration
+  fusion_method: "concat"  # How to fuse RGB and MS features: 'concat', 'add', 'attention', 'gated', 'bilinear'
+  fusion_dim: 256  # Dimension of fused features
+  fusion_dropout: 0.1  # Dropout after fusion
+  
+  # Attention configuration (used if fusion_method == 'attention' or 'gated')
+  attention:
+    num_heads: 4  # Number of attention heads
+    attn_dropout: 0.1  # Dropout in attention layers
+    use_bias: true  # Use bias in attention layers
+    scale: True  # Scale attention scores by sqrt(d_k)
+    
+  # Gated fusion configuration (used if fusion_method == 'gated')
+  gated_fusion:
+    hidden_dim: 128  # Hidden dimension for gating network
+    dropout: 0.1  # Dropout in gating network
+    
+  # Bilinear fusion configuration (used if fusion_method == 'bilinear')
+  bilinear_fusion:
+    hidden_dim: 256  # Hidden dimension for bilinear fusion
+    dropout: 0.1  # Dropout in bilinear fusion
+    
+  # Model head configuration
+  head_type: "mlp"  # 'mlp', 'linear', 'arcface', 'cosface', 'sphereface'
+  hidden_dims: [512, 256]  # Hidden layer dimensions
+  dropout: 0.2  # Dropout rate in classifier head
+  use_batch_norm: true  # Use batch normalization in classifier head
+  use_skip: true  # Use skip connections in classifier head
+  
+  # Loss function configuration
+  loss: "cross_entropy"  # 'cross_entropy', 'focal', 'label_smoothing', 'bce', 'dice', 'lovasz', 'combo'
+  
+  # Cross entropy loss specific
+  class_weights: "auto"  # 'auto', 'balanced', None, or list of weights
+  label_smoothing: 0.1  # Label smoothing factor
+  
+  # Focal loss specific
+  focal_alpha: 0.25  # Alpha for focal loss
+  focal_gamma: 2.0  # Gamma for focal loss
+  
+  # Knowledge distillation
+  use_distillation: false  # Enable knowledge distillation
+  teacher_checkpoint: ""  # Path to teacher model checkpoint
+  teacher_model: ""  # Teacher model class name if different from student
+  teacher_config: {}  # Teacher model config overrides
+  
+  # Distillation loss configuration
+  distillation:
+    temperature: 3.0  # Temperature for softmax
+    alpha: 0.5  # Weight for distillation loss
+    beta: 0.5  # Weight for student loss
+    distillation_type: 'soft'  # 'soft', 'hard', 'attention', 'hint'
+    
+  # Regularization
+  weight_decay: 1e-4  # L2 weight decay
+  drop_connect_rate: 0.2  # Drop connect rate for EfficientNet
+  
+  # Advanced options
+  gradient_checkpointing: false  # Enable gradient checkpointing
+  sync_bn: false  # Convert BatchNorm to SyncBatchNorm
+  
+  # Initialization
+  init_weights: "kaiming"  # 'kaiming', 'xavier', 'normal', 'orthogonal', 'trunc_normal'
+  init_gain: 0.02  # Scaling factor for initialization
+  
+  # Model export
+  export_onnx: false  # Whether to export to ONNX format
+  export_trace: false  # Whether to export using torch.jit.trace
+  
+  # Debugging
+  log_grad_norm: false  # Log gradient norms during training
+  log_weights: false  # Log weight histograms during training
+  log_activations: false  # Log activation histograms during training
+
+# Training Configuration
+training:
+  # Training process
+  batch_size: 32  # Effective batch size (will be scaled by number of GPUs and gradient accumulation)
+  max_epochs: 100  # Maximum number of training epochs
+  min_epochs: 10  # Minimum number of training epochs before early stopping can trigger
+  gradient_accumulation_steps: 1  # Simulate larger batch sizes by accumulating gradients
+  
+  # Optimization
+  gradient_clip_val: 1.0  # Clip gradients at this value (0.0 to disable)
+  gradient_clip_algorithm: "norm"  # 'norm' or 'value'
+  
+  # Learning rate scheduling
+  lr_scheduler: "cosine"  # 'step', 'plateau', 'cosine', 'one_cycle', 'reduce_on_plateau'
+  lr_warmup_epochs: 5  # Number of epochs for linear warmup
+  lr_warmup_start_lr: 1e-6  # Initial learning rate for warmup
+  min_lr: 1e-6  # Minimum learning rate
+  
+  # Stochastic Weight Averaging (SWA)
+  use_swa: false  # Enable Stochastic Weight Averaging
+  swa_lrs: 1e-3  # Learning rate for SWA
+  swa_epoch_start: 0.8  # Start SWA at this fraction of max_epochs
+  
+  # Hardware and performance
+  accelerator: "auto"  # 'cpu', 'gpu', 'tpu', 'ipu', 'auto'
+  devices: "auto"  # Number of devices or list of device indices
+  strategy: "auto"  # 'ddp', 'ddp_spawn', 'deepspeed', 'fsdp', 'auto'
+  precision: "16-mixed"  # '32-true', '16-mixed', 'bf16-mixed'
+  deterministic: false  # Set to true for full reproducibility (may be slower)
+  benchmark: true  # Enable cudnn.benchmark for faster training (if input size is fixed)
+  
+  # Debugging and development
+  overfit_batches: 0.0  # If > 0.0, overfit on this many batches (float=fraction, int=num_batches)
+  fast_dev_run: false  # Run a single batch for debugging
+  limit_train_batches: 1.0  # Fraction or number of training batches to use
+  limit_val_batches: 1.0  # Fraction or number of validation batches to use
+  limit_test_batches: 1.0  # Fraction or number of test batches to use
+  num_sanity_val_steps: 2  # Number of validation sanity checks before training
+  
+  # Logging and validation
+  log_interval: 50  # Log training metrics every N steps
+  val_interval: 1  # Run validation every N epochs
+  check_val_every_n_epoch: 1  # Deprecated, use val_interval instead
+  
+  # Checkpointing
+  save_top_k: 3  # Save top-k checkpoints based on monitored metric
+  save_last: true  # Always save the last checkpoint
+  save_weights_only: false  # Save only model weights or full checkpoint
+  every_n_epochs: 1  # Save checkpoint every N epochs
+  
+  # Early stopping
+  early_stopping:
+    monitor: "val_loss"  # Metric to monitor
+    mode: "min"  # 'min' or 'max'
+    patience: 10  # Number of epochs to wait before stopping
+    min_delta: 0.001  # Minimum change to qualify as improvement
+    verbose: true  # Log early stopping actions
+    
+  # Learning rate finder
+  auto_lr_find: false  # Automatically find optimal learning rate
+  lr_find_num_training: 100  # Number of training iterations for LR finder
+  lr_find_min_lr: 1e-8  # Minimum learning rate for LR finder
+  lr_find_max_lr: 1.0  # Maximum learning rate for LR finder
+
+  # Optimizer configuration
+  optimizer:
+    name: "adamw"  # 'adam', 'adamw', 'sgd', 'rmsprop', 'adagrad', 'adadelta', 'adamax', 'rmsprop', 'rprop', 'lbfgs'
+    learning_rate: 1e-3  # Base learning rate
+    weight_decay: 1e-4  # L2 regularization
+    
+    # Common parameters
+    eps: 1e-8  # Epsilon for numerical stability
+    amsgrad: false  # Use AMSGrad variant of Adam/AdamW
+    
+    # SGD specific
+    momentum: 0.9  # Momentum factor (for SGD)
+    nesterov: false  # Enable Nesterov momentum (for SGD)
+    dampening: 0.0  # Dampening for momentum (for SGD)
+    
+    # RMSprop specific
+    alpha: 0.99  # Smoothing constant (for RMSprop)
+    centered: false  # Compute centered RMSProp (for RMSprop)
+    
+    # Adadelta specific
+    rho: 0.9  # Coefficient for computing running averages (for Adadelta)
+    
+    # Adagrad specific
+    initial_accumulator_value: 0  # Initial accumulator value (for Adagrad)
+    
+    # Adamax specific
+    beta1: 0.9  # Coefficients for computing running averages (for Adamax)
+    beta2: 0.999  # Coefficients for computing running averages (for Adamax)
+  
+  # Learning rate scheduler configuration
+  lr_scheduler:
+    # Scheduler type: 'step', 'multistep', 'cosine', 'cosine_with_restarts', 'reduce_on_plateau', 'one_cycle', 'cyclic', 'lambda', 'multiplicative', 'linear', 'exponential'
+    name: "cosine"
+    
+    # Common parameters
+    verbose: true  # Print learning rate updates
+    
+    # StepLR/MultiStepLR parameters
+    step_size: 30  # Period of learning rate decay (for StepLR)
+    gamma: 0.1  # Multiplicative factor of learning rate decay (for StepLR/MultiStepLR)
+    milestones: [30, 60, 90]  # List of epoch indices for MultiStepLR
+    
+    # CosineAnnealing parameters
+    t_max: 10  # Maximum number of iterations (for CosineAnnealing)
+    eta_min: 1e-6  # Minimum learning rate (for CosineAnnealing)
+    
+    # ReduceLROnPlateau parameters
+    mode: 'min'  # One of min, max (for ReduceLROnPlateau)
+    factor: 0.1  # Factor by which the learning rate will be reduced (for ReduceLROnPlateau)
+    patience: 10  # Number of epochs with no improvement (for ReduceLROnPlateau)
+    threshold: 1e-4  # Threshold for measuring the new optimum (for ReduceLROnPlateau)
+    threshold_mode: 'rel'  # One of rel, abs (for ReduceLROnPlateau)
+    cooldown: 0  # Number of epochs to wait before resuming normal operation (for ReduceLROnPlateau)
+    
+    # OneCycleLR parameters
+    max_lr: 3e-3  # Upper learning rate boundary (for OneCycleLR)
+    pct_start: 0.3  # Percentage of cycle spent increasing learning rate (for OneCycleLR)
+    anneal_strategy: 'cos'  # {'cos', 'linear'} (for OneCycleLR)
+    cycle_momentum: true  # If true, momentum is cycled (for OneCycleLR)
+    base_momentum: 0.85  # Lower momentum boundaries (for OneCycleLR)
+    max_momentum: 0.95  # Upper momentum boundaries (for OneCycleLR)
+    div_factor: 25.0  # Determines initial learning rate (for OneCycleLR)
+    final_div_factor: 10000.0  # Determines minimum learning rate (for OneCycleLR)
+    
+    # CyclicLR parameters
+    base_lr: 1e-5  # Base learning rate (for CyclicLR)
+    max_lr_cyclic: 1e-3  # Upper learning rate boundaries (for CyclicLR)
+    step_size_up: 2000  # Number of training iterations in increasing half of cycle (for CyclicLR)
+    step_size_down: None  # Number of training iterations in decreasing half of cycle (for CyclicLR)
+    mode_cyclic: 'triangular'  # One of {'triangular', 'triangular2', 'exp_range'} (for CyclicLR)
+    gamma_cyclic: 1.0  # Constant in 'exp_range' scaling function (for CyclicLR)
+    
+    # CosineAnnealingWarmRestarts parameters
+    t_0: 10  # Number of iterations for the first restart (for CosineAnnealingWarmRestarts)
+    t_mult: 1  # A factor increases t_i after a restart (for CosineAnnealingWarmRestarts)
+    
+    # LambdaLR parameters
+    lr_lambda: 0.95  # Multiplicative factor (for LambdaLR)
+    
+    # ExponentialLR parameters
+    gamma_exp: 0.9  # Multiplicative factor (for ExponentialLR)
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    monitor: "val_loss"
+    mode: "min"
+    patience: 10
+    min_delta: 0.001
+    verbose: true
+  
+  # Model checkpointing
+  checkpoint:
+    save_top_k: 3  # Save top k models
+    monitor: "val_loss"
+    mode: "min"
+    save_last: true  # Always save the last model
+    save_weights_only: false  # Save full model
+    every_n_epochs: 1  # Save checkpoint every N epochs
+    
+  # Gradient accumulation
+  gradient_accumulation_steps: 1  # Accumulate gradients over N batches
+
+# Data Augmentation and Transformation Configuration
+data_augmentation:
+  # Common settings
+  image_size: [224, 224]  # Target image size [height, width]
+  interpolation: 2  # 0: nearest, 1: bilinear, 2: bicubic, 3: lanczos
+  
+  # Training augmentations
+  train:
+    # Basic geometric transforms
+    random_resized_crop:
+      enabled: true
+      height: 224
+      width: 224
+      scale: [0.08, 1.0]  # Range of scale of the origin size
+      ratio: [0.75, 1.33]  # Range of aspect ratio
+      p: 1.0  # Probability of applying
+    
+    # Flipping
+    horizontal_flip: 0.5  # Probability of horizontal flip
+    vertical_flip: 0.2  # Probability of vertical flip
+    
+    # Rotation and affine transforms
+    rotate:
+      enabled: true
+      limit: 45  # Degrees
+      p: 0.5
+    shift_scale_rotate:
+      enabled: true
+      shift_limit: 0.0625  # Maximum shift as fraction of height/width
+      scale_limit: 0.1  # Maximum scale change
+      rotate_limit: 0  # Already handled by rotate
+      p: 0.5
+    
+    # Color transforms
+    color_jitter:
+      enabled: true
+      brightness: 0.2  # Maximum change in brightness
+      contrast: 0.2  # Maximum change in contrast
+      saturation: 0.2  # Maximum change in saturation
+      hue: 0.1  # Maximum change in hue (-hue, +hue)
+      p: 0.8  # Probability of applying
+    
+    # Advanced color transforms
+    random_gamma: 0.2  # Probability of applying gamma correction
+    random_brightness_contrast: 0.2  # Probability of random brightness/contrast
+    clahe: 0.2  # Probability of applying CLAHE
+    
+    # Blur and noise
+    gaussian_blur:
+      enabled: true
+      blur_limit: [3, 7]  # Kernel size (odd numbers between 3 and 7)
+      p: 0.2
+    gauss_noise: 0.1  # Probability of adding Gaussian noise
+    
+    # Advanced augmentations
+    cutmix: 0.5  # Probability of applying CutMix
+    mixup: 0.2  # Probability of applying MixUp
+    cutout: 0.2  # Probability of applying CutOut
+    grid_distortion: 0.2  # Probability of applying grid distortion
+    elastic_transform: 0.2  # Probability of elastic transform
+    
+    # Random erasing
+    random_erasing:
+      enabled: true
+      scale: [0.02, 0.33]  # Range of area to erase
+      ratio: [0.3, 3.3]  # Range of aspect ratio of area to erase
+      p: 0.2  # Probability of applying
+    
+    # Normalization
+    normalize:
+      enabled: true
+      mean: [0.485, 0.456, 0.406]  # ImageNet mean
+      std: [0.229, 0.224, 0.225]  # ImageNet std
+      max_pixel_value: 255.0
+    
+    # Convert to tensor
+    to_tensor: true  # Convert to PyTorch tensor
+    
+    # Advanced options
+    use_albumentations: true  # Use albumentations for faster augmentations
+    always_apply: false  # Apply augmentations to all images
+    p: 1.0  # Probability of applying augmentations
+  
+  # Validation augmentations (minimal)
+  val:
+    resize:
+      enabled: true
+      height: 256
+      width: 256
+      p: 1.0
+    center_crop:
+      enabled: true
+      height: 224
+      width: 224
+      p: 1.0
+    normalize:
+      enabled: true
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
+      max_pixel_value: 255.0
+    to_tensor: true
+    
+  # Test augmentations (same as validation by default)
+  test:
+    resize:
+      enabled: true
+      height: 256
+      width: 256
+      p: 1.0
+    center_crop:
+      enabled: true
+      height: 224
+      width: 224
+      p: 1.0
+    normalize:
+      enabled: true
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
+      max_pixel_value: 255.0
+    to_tensor: true
+    
+  # Test-time augmentation (TTA) settings
+  tta:
+    enabled: false  # Enable test-time augmentation
+    flip_ttas: ['none', 'horizontal']  # 'none', 'horizontal', 'vertical', 'hv'
+    transforms:  # Additional transforms to apply for TTA
+      - name: 'none'
+      - name: 'horizontal_flip'
+        p: 1.0
+  
+  # Advanced configuration
+  additional_targets:  # For paired image transformations (e.g., image-mask)
+    mask: 'image'
+    depth: 'image'
+    bbox: 'bboxes'
+    keypoints: 'keypoints'
+  
+  # Custom augmentations (implemented in code)
+  custom_augmentations: []
+  
+  # Performance optimization
+  num_workers: 4  # Number of workers for data loading
+  pin_memory: true  # Use pinned memory for faster data transfer to GPU
+  drop_last: false  # Drop the last incomplete batch
+  shuffle: true  # Shuffle the data
+  persistent_workers: true  # Maintain workers between epochs for faster training
+
+# Logging and Monitoring Configuration
+logging:
+  # General logging settings
+  log_dir: "logs"  # Base directory for all logs
+  experiment_name: ""  # Will be auto-generated if empty
+  log_level: "INFO"  # Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  log_to_file: true  # Save logs to file
+  log_to_console: true  # Print logs to console
+  
+  # Experiment tracking
+  use_tensorboard: true  # Log to TensorBoard
+  use_wandb: false  # Log to Weights & Biases
+  use_mlflow: false  # Log to MLflow
+  use_comet: false  # Log to Comet.ml
+  use_neptune: false  # Log to Neptune.ai
+  
+  # TensorBoard specific settings
+  tensorboard:
+    log_graph: true  # Log model graph (can be memory intensive for large models)
+    log_histograms: false  # Log weight histograms (can be memory intensive)
+    log_embeddings: false  # Log embeddings (can be memory intensive)
+    log_gradients: false  # Log gradient histograms (can be memory intensive)
+    log_learning_rate: true  # Log learning rate
+    log_memory: true  # Log memory usage
+    log_hparams: true  # Log hyperparameters
+    
+  # Weights & Biases specific settings
+  wandb:
+    project: "KrishiSahayak"  # Project name
+    entity: ""  # Team/User name (leave empty for personal account)
+    run_name: ""  # Run name (will be auto-generated if empty)
+    group: ""  # Group name for organizing runs
+    tags: ["hybrid", "plant-disease"]  # Tags for organizing runs
+    notes: ""  # Additional notes about the run
+    sync_tensorboard: true  # Sync TensorBoard logs
+    log_model: false  # Log model checkpoints
+    watch_model: false  # Watch model gradients and parameters
+    
+  # MLflow specific settings
+  mlflow:
+    tracking_uri: ""  # MLflow tracking server URI (empty for local)
+    experiment_name: "KrishiSahayak"  # Experiment name
+    run_name: ""  # Run name (will be auto-generated if empty)
+    log_artifacts: true  # Log artifacts (checkpoints, etc.)
+    
+  # Comet.ml specific settings
+  comet:
+    api_key: ""  # Your Comet API key
+    project_name: "KrishiSahayak"  # Project name
+    workspace: ""  # Workspace name
+    
+  # Neptune.ai specific settings
+  neptune:
+    api_token: ""  # Your Neptune API token
+    project: ""  # Project name (e.g., 'workspace/project')
+    name: ""  # Run name (will be auto-generated if empty)
+    
+  # What to log
+  metrics:
+    train: ["loss", "accuracy", "learning_rate"]
+    val: ["loss", "accuracy", "f1", "precision", "recall"]
+    test: ["loss", "accuracy", "f1", "precision", "recall", "confusion_matrix"]
+    
+  # Logging frequency
+  log_interval: 50  # Steps between logging training metrics
+  log_val_interval: 1  # Epochs between logging validation metrics
+  log_test_interval: 1  # Epochs between logging test metrics
+  
+  # Model checkpointing
+  save_top_k: 3  # Save top-k checkpoints based on monitored metric
+  save_last: true  # Always save the last checkpoint
+  save_weights_only: false  # Save only model weights or full checkpoint
+  every_n_epochs: 1  # Save checkpoint every N epochs
+  
+  # Monitoring
+  monitor: "val_loss"  # Metric to monitor for checkpointing and early stopping
+  mode: "min"  # 'min' or 'max' for the monitored metric
+  
+  # Logging callbacks
+  callbacks:
+    learning_rate_monitor: true  # Log learning rate
+    model_checkpoint: true  # Save model checkpoints
+    early_stopping: true  # Enable early stopping
+    model_summary: true  # Log model summary
+    progress_bar: true  # Show progress bar
+    
+  # System metrics
+  system_metrics:
+    cpu: true  # Log CPU usage
+    gpu: true  # Log GPU usage
+    memory: true  # Log memory usage
+    disk: false  # Log disk usage
+    network: false  # Log network usage
+    
+  # Debugging
+  log_grad_norm: false  # Log gradient norms (can be memory intensive)
+  log_weights_histogram: false  # Log weight histograms (can be memory intensive)
+  log_activations_histogram: false  # Log activation histograms (can be memory intensive)
+  
+  # Remote monitoring
+  enable_remote_monitoring: false  # Enable remote monitoring (e.g., for mobile)
+  remote_monitoring_interval: 60  # Seconds between remote monitoring updates
+  strategy: "auto"
+  benchmark: true
+  
+# Deployment Configuration
+deployment:
+  export_formats: ["torchscript", "onnx", "tflite"]
+  onnx:
+    opset_version: 13
+  tflite:
+    quantize: true
+
+# Debug Configuration
+debug:
+  fast_dev_run: false
+  overfit_batches: 0.0
+  limit_train_batches: 1.0
+  limit_val_batches: 1.0
+  limit_test_batches: 1.0
