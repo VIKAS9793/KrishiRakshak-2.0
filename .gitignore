@@ -38,12 +38,23 @@ ENV/
 *.log.*
 logs/
 
-# Data directories
-data/
-!data/README.md
+# Ignore the root data directory and its contents
+/data/
+# But keep the data directory itself tracked with an empty __init__.py
+!/data/__init__.py
 
-# Checkpoints and models
-models/
+# Track these specific directories and files
+!/scripts/
+!/src/
+!**/__init__.py
+
+# Model files to ignore
+models/*.pth
+models/*.onnx
+models/*.tflite
+models/*.pt
+models/*.json
+!models/__init__.py
 !models/README.md
 
 # Checkpoints and outputs
